@@ -9,7 +9,11 @@
     "build_always": false,
     "__internal": {
       "dev": {},
-      "build": {}
+      "build": {
+        "spa": {
+          "iconHash": "9954358c64a96170d32389b8469f2915"
+        }
+      }
     }
   }
 }
