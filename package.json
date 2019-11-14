@@ -1,6 +1,6 @@
 {
   "name": "ext-text-manipulator",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A Quasar Framework app",
   "productName": "Quasar App",
   "cordovaId": "org.hightemp.ext-text-manipulator.app",
@@ -8,6 +8,7 @@
   "author": "",
   "private": true,
   "scripts": {
+    "build": "quasar build && bash crxmake.sh ./dist/spa ./key.pem",
     "test": "echo \"No test specified\" && exit 0"
   },
   "dependencies": {
