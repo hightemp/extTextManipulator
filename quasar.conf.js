@@ -106,6 +106,23 @@ module.exports = function (ctx) {
       pwa: false
     },
 
+    spa: {
+      manifest: {
+        icons: [
+          {
+            'src': 'statics/icons/icon-16x16.png',
+            'sizes': '16x16',
+            'type': 'image/png'
+          },
+          {
+            'src': 'statics/icons/icon-48x48.png',
+            'sizes': '48x48',
+            'type': 'image/png'
+          }
+        ]
+      }
+    },
+
     // https://quasar.dev/quasar-cli/developing-pwa/configuring-pwa
     pwa: {
       // workboxPluginMode: 'InjectManifest',
