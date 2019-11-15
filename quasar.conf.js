@@ -75,18 +75,20 @@ module.exports = function (ctx) {
           loader: 'raw-loader'
         })
         const CopyWebpackPlugin = require('copy-webpack-plugin')
-        cfg.plugins.push(
-          new CopyWebpackPlugin([
-            {
-              from: 'extension/manifest.json',
-              to: cfg.output.path
-            },
-            {
-              from: 'extension/background.js',
-              to: cfg.output.path + '/js'
-            }
-          ])
-        )
+        if (cfg.output) {
+          cfg.plugins.push(
+            new CopyWebpackPlugin([
+              {
+                from: 'extension/manifest.json',
+                to: cfg.output.path
+              },
+              {
+                from: 'extension/background.js',
+                to: cfg.output.path + '/js'
+              }
+            ])
+          )
+        }
       }
     },
 
