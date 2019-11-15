@@ -1,14 +1,16 @@
 {
   "name": "ext-text-manipulator",
   "version": "0.1.0",
-  "description": "A Quasar Framework app",
-  "productName": "Quasar App",
+  "description": "Google Chrome extension for text manipulations (filter with regexps)",
+  "productName": "extTextManipulator",
   "cordovaId": "org.hightemp.ext-text-manipulator.app",
   "capacitorId": "",
   "author": "",
   "private": true,
   "scripts": {
     "build": "quasar build && bash crxmake.sh ./dist/spa ./key.pem",
+    "build_and_push": "npm run build && git commit -am 'update' && git push",
+    "install_extensions": "quasar ext add @quasar/icon-genie",
     "test": "echo \"No test specified\" && exit 0"
   },
   "dependencies": {

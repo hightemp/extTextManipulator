@@ -2,10 +2,12 @@
 #
 # Purpose: Pack a Chromium extension directory into crx format
 
-set -x
+if [ "$3" = "-d" ];then
+  set -x
+fi
 
-if test $# -ne 2; then
-  echo "Usage: crxmake.sh <extension dir> <pem path>"
+if test $# -lt 2; then
+  echo "Usage: crxmake.sh <extension dir> <pem path> [flags]"
   exit 1
 fi
 
@@ -14,6 +16,31 @@ key=$(realpath $2)
 
 echo "dir: $dir"
 echo "key: $key"
+
+cwd=$(pwd -P)
+
+project_name=$(basename "$cwd")
+zip="$project_name.zip"
+zip_path="$cwd/$zip"
+
+rm "$zip_path"
+
+(cd "$dir" && zip -qr -9 -X "$zip_path" .)
+
+if [ -f $zip_path ];then
+  echo "[+] packed to $zip_path"
+else
+  echo "[-] error"
+fi
+
+exit
+
+
+
+
+
+
+
 
 ps="/" # "\\"
 

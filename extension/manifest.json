@@ -18,7 +18,6 @@
     "networking.onc",
     "system.network",
     "fileSystem",
-    "socket",
     {
       "fileSystem": [
         "write", 
