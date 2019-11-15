@@ -106,23 +106,6 @@ module.exports = function (ctx) {
       pwa: false
     },
 
-    spa: {
-      manifest: {
-        icons: [
-          {
-            'src': 'statics/icons/icon-16x16.png',
-            'sizes': '16x16',
-            'type': 'image/png'
-          },
-          {
-            'src': 'statics/icons/icon-48x48.png',
-            'sizes': '48x48',
-            'type': 'image/png'
-          }
-        ]
-      }
-    },
-
     // https://quasar.dev/quasar-cli/developing-pwa/configuring-pwa
     pwa: {
       // workboxPluginMode: 'InjectManifest',
@@ -136,16 +119,6 @@ module.exports = function (ctx) {
         background_color: '#ffffff',
         theme_color: '#027be3',
         icons: [
-          {
-            'src': 'statics/icons/icon-16x16.png',
-            'sizes': '16x16',
-            'type': 'image/png'
-          },
-          {
-            'src': 'statics/icons/icon-48x48.png',
-            'sizes': '48x48',
-            'type': 'image/png'
-          },
           {            
             'src': 'statics/icons/icon-128x128.png',
             'sizes': '128x128',

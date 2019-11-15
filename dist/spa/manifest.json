@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "manifest_version": 2,
   "icons": {
-    "16": "statics/icons/icon-16x16.png",
-    "48": "statics/icons/icon-48x48.png",
+    "16": "statics/icons/icon-128x128.png",
+    "48": "statics/icons/icon-128x128.png",
     "128": "statics/icons/icon-128x128.png"
   },
   "permissions": [
