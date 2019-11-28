@@ -1,0 +1,54 @@
+{
+    "aFiltersTypes": [
+        "regexp",
+        "text",
+        "function"
+    ],
+    "oTextBoxes": {},
+    "oFilters": {
+        "guid1": {
+            "bSelected": false,
+            "sName": "Remove spaces",
+            "sType": "regexp",
+            "sRegExp": "s+",
+            "sFlags": "g",
+            "sReplacement": ""
+        },
+        "guid2": {
+            "bSelected": false,
+            "sName": "Remove test",
+            "sType": "text",
+            "sSubString": "test",
+            "sReplacement": ""
+        },
+        "guid3": {
+            "bSelected": false,
+            "sName": "Remove with function",
+            "sType": "function",
+            "sFunction": "function(sText) { return ''; }"
+        }
+    },
+    "sSelectedFilter": "",
+    "sSelectedFilterType": "",
+    "oApplicationSettings": {
+        "sHomePath": "",
+        "sConfigurationPath": ""
+    },
+    "oFilterCmOptions": {
+        "mode": "javascript",
+        "lineNumbers": true,
+        "lineWrapping": true,
+        "matchBrackets": true,
+        "continueComments": "Enter",
+        "extraKeys": {
+            "Ctrl-Q": "toggleComment"
+        }
+    },
+    "oCmOptions": {
+        "lineNumbers": true,
+        "lineWrapping": true
+    },
+    "sFiltersFilterText": "",
+    "iSaveTimeout": 5000,
+    "iTextBoxSplitter": 10
+}
