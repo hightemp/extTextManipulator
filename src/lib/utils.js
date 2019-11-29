@@ -1,5 +1,5 @@
 
-module.exports = {
+export default {
     fnGetFirstKey(oObject)
     {
         return Object.keys(oObject)[0];

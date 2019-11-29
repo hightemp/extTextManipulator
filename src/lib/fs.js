@@ -1,16 +1,29 @@
-const chrome_fs = require('chrome-fs');
-
+var fs;
 var oFs = {};
-var aKeys = Object.keys(chrome_fs);
+
+if (window.chrome) {
+  fs = require('chrome-fs');
+} else {
+  fs = require('fs');
+}
+
+var aKeys = Object.keys(fs);
 
 aKeys.forEach((sKey) => {
     oFs[sKey] = (...aArgs) => {
         return new Promise((fnSuccess, fnFail) => {
-            chrome_fs[oFs](...aArgs, (...aCallbackArgs) => {
-                fnSuccess(...aCallbackArgs);
-            });            
+            if (fs[sKey+'Sync']) {
+                console.log(`${sKey}Sync`, aArgs);
+                fs[sKey+'Sync'](...aArgs);
+            } else {
+                console.log(`${sKey}`, aArgs);
+                fs[sKey](...aArgs, (...aCallbackArgs) => {
+                    console.log(`${sKey} - callback`, aCallbackArgs);
+                    fnSuccess(...aCallbackArgs);
+                });
+            }
         });
     };
 });
 
-module.exports = oFs;
+export default oFs;

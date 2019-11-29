@@ -336,14 +336,8 @@ import 'codemirror/mode/javascript/javascript.js'
 
 import cuid from 'cuid';
 
-//import fs from 'fs';
-if (chrome) {
-  const fs = require('~/lib/fs.js');
-} else {
-  const fs = require('fs');
-}
-
-const utils = require('~/lib/utils.js');
+const fs = require('~/lib/fs.js').default;
+const utils = require('~/lib/utils.js').default;
 
 const FILTER_REGEXP = "regexp";
 const FILTER_TEXT = "text";
@@ -695,10 +689,12 @@ export default {
     },
     async fnSaveData()
     {
+      console.log('fnSaveData');
       var sData = JSON.stringify(this.$data, null, 4);
 
       try {
         await fs.writeFile(sDataFilePath, sData);
+        console.log(sDataFilePath, sData)
       } catch (oError) {
         this.fnNotifyError(oError.toString());
         return;
@@ -706,9 +702,11 @@ export default {
 
       //this.fnNotifySuccess("Data saved");
     },
-    fnSaveLoop()
+    async fnSaveLoop()
     {
-      this.fnSaveData();
+      console.log('fnSaveLoop');
+
+      await this.fnSaveData();
 
       setTimeout(this.fnSaveLoop, this.iSaveTimeout);
     }
@@ -716,12 +714,16 @@ export default {
 
   async created()
   {
-    if (fs.existsSync ? fs.existsSync(sDataFilePath) : await fs.exists(sDataFilePath)) {
+    console.log('created');
+
+    if (await fs.exists(sDataFilePath)) {
       try {
         var oThis = this;
+        console.log('created 2');
         var oData = JSON.parse(await fs.readFile(sDataFilePath).toString());
         var aKeys = Object.keys(oData);
 
+        console.log('created 3');
         aKeys.forEach((sKey) => { 
           Vue.set(oThis.$data, sKey, oData[sKey]);
         });
@@ -729,10 +731,13 @@ export default {
         this.fnNotifyError(oError.toString());
       }
     }
+    console.log('created 4');
 
     this.sSelectedTextBox = utils.fnGetFirstKey(this.oTextBoxes);
 
-    this.fnSaveLoop();
+    console.log('created 5');
+
+    await this.fnSaveLoop();
   }
 }
 </script>
