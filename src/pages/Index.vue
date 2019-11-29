@@ -72,8 +72,17 @@
                   >
                     <q-tab 
                       :name="sResultID" 
-                      :label="oResultItem.sName" 
+                      :label="oResultItem.sName ? oResultItem.sName : 'Undefined'" 
                       v-for="(oResultItem, sResultID) in oTextBox.oResults"
+                    />
+                    <q-btn 
+                      color="primary" 
+                      icon="loop"
+                      @click="fnReuseResultTab" 
+                      flat 
+                      unelevated 
+                      class="col-auto q-ml-auto"
+                      v-if="oTextBox.sSelectedResultTab"
                     />
                     <q-btn 
                       color="primary" 
@@ -81,7 +90,7 @@
                       @click="fnRemoveResultTab(oTextBox, sResultID)" 
                       flat 
                       unelevated 
-                      class="col-auto q-ml-auto"
+                      class="col-auto q-ml-sm"
                       v-if="oTextBox.sSelectedResultTab"
                     />
                   </q-tabs>
@@ -90,12 +99,33 @@
 
                   <q-tab-panels 
                     v-model="oTextBox.sSelectedResultTab" 
+                    class="flex"
                   >
                     <q-tab-panel 
                       :name="sResultID" 
                       v-for="(oResultItem, sResultID) in oTextBox.oResults"
+                      class="row flex"
                     >
-                      {{ oResultItem.sName }}
+                      <div class="col-3 column">
+                        <q-input 
+                          outlined 
+                          square 
+                          v-model="oResultItem.sName" 
+                          dense
+                          label="Name" 
+                          class="col-auto"
+                        />
+                      </div>
+                      <div class="col flex q-pl-sm">
+                        <q-scroll-area
+                          :thumb-style="oScollbarThumbStyle"
+                          :bar-style="oScollbarBarStyle"
+                          style="border: 1px solid #eee"
+                          class="col"
+                        >
+                          {{ oResultItem.sResultText }}
+                        </q-scroll-area>
+                      </div>
                     </q-tab-panel>
                   </q-tab-panels>
                 </div>             
@@ -271,7 +301,7 @@
 .CodeMirror {
   height: auto;
   min-height: 0;
-  max-height: calc(100vh - 40px - 48px);
+  max-height: calc(50vh - 40px - 48px);
   width: auto;
   min-width: 0;
   max-width: 100%;
@@ -306,7 +336,12 @@ import 'codemirror/mode/javascript/javascript.js'
 
 import cuid from 'cuid';
 
-import fs from 'fs';
+//import fs from 'fs';
+if (chrome) {
+  const fs = require('~/lib/fs.js');
+} else {
+  const fs = require('fs');
+}
 
 const utils = require('~/lib/utils.js');
 
@@ -342,6 +377,7 @@ export default {
       ],
 
       oTextBoxes: {
+        /*
         guid1: {
           sName: 'Undefined',
           sSelectedResultTab: "",
@@ -349,7 +385,24 @@ export default {
           oResults: {
             guid1: {
               sName: 'Undefined',
-              sResultText: '123'
+              sResultText: '123',
+              oFilters: {
+                guid1: {
+                  bSelected: false,
+                  sName: "Remove spaces",
+                  sType: "regexp",
+                  sRegExp: "\s+",
+                  sFlags: "g",
+                  sReplacement: ""
+                },
+                guid2: {
+                  bSelected: false,
+                  sName: "Remove test",
+                  sType: "text",
+                  sSubString: "test",
+                  sReplacement: ""
+                },
+              }
             },
             guid2: {
               sName: 'Test',
@@ -372,8 +425,10 @@ export default {
             }
           }
         }
+        */
       },
       oFilters: {
+        /*
         guid1: {
           bSelected: false,
           sName: "Remove spaces",
@@ -395,6 +450,7 @@ export default {
           sType: "function",
           sFunction: "function(sText) { return ''; }"
         }
+        */
       },
 
       sSelectedFilter: "",
@@ -531,7 +587,73 @@ export default {
     },
     fnExecuteFilters()
     {
+      console.log(`this.sSelectedTextBox ${this.sSelectedTextBox}`);
+      var oThis = this;
+      var oTextBox = this.oTextBoxes[this.sSelectedTextBox];
+      var aKeys = Object.keys(oThis.oFilters);
+      var oSelectedFilters = {};
+      var sResult = oTextBox.sTextArea;
+      var oResults = oTextBox.oResults;
 
+      aKeys.forEach((sKey) => { 
+        var oFilter = oThis.oFilters[sKey];
+
+        if (!oFilter.bSelected) {
+          return;
+        }
+
+        if (oFilter.sType==FILTER_REGEXP) {
+          var oRegExp = new RegExp(oFilter.sRegExp, oFilter.sFlags);
+
+          sResult = sResult.replace(oRegExp, oFilter.sReplacement);
+        }
+        if (oFilter.sType==FILTER_TEXT) {
+          sResult = sResult.replace(oFilter.sSubString, oFilter.sReplacement);
+        }
+        if (oFilter.sType==FILTER_FUNCTION) {
+          eval('var fnFunction = '+oFilter.sFunction);
+          sResult = fnFunction(sResult);
+        }
+
+        oSelectedFilters[sKey] = oFilter
+      });
+
+      var sCUID = cuid();
+
+      Vue.set(oResults, sCUID, {
+        sName: '',
+        sResultText: sResult,
+        oFilters: oSelectedFilters
+      });
+
+      console.log(`oTextBox.oResults`, oTextBox.oResults)
+    },
+    fnReuseResultTab()
+    {
+      var oThis = this;
+      var oTextBox = this.oTextBoxes[this.sSelectedTextBox];
+      var oResultItem = oTextBox.oResults[oTextBox.sSelectedResultTab];
+      var aKeys = Object.keys(oResultItem.oFilters);
+      var sResult = oTextBox.sTextArea;
+      
+      aKeys.forEach((sKey) => { 
+        var oFilter = oResultItem.oFilters[sKey];
+
+        if (oFilter.sType==FILTER_REGEXP) {
+          var oRegExp = new RegExp(oFilter.sRegExp, oFilter.sFlags);
+
+          sResult = sResult.replace(oRegExp, oFilter.sReplacement);
+        }
+        if (oFilter.sType==FILTER_TEXT) {
+          sResult = sResult.replace(oFilter.sSubString, oFilter.sReplacement);
+        }
+        if (oFilter.sType==FILTER_FUNCTION) {
+          eval('var fnFunction = '+oFilter.sFunction);
+          sResult = fnFunction(sResult);
+        }
+      });
+
+      oResultItem.sResultText = sResult
     },
     fnAddTextBox()
     {
@@ -571,12 +693,12 @@ export default {
     {
       this.$q.notify({ message: sMessage, icon: 'thumb_up' });
     },
-    fnSaveData()
+    async fnSaveData()
     {
       var sData = JSON.stringify(this.$data, null, 4);
 
       try {
-        fs.writeFileSync(sDataFilePath, sData);
+        await fs.writeFile(sDataFilePath, sData);
       } catch (oError) {
         this.fnNotifyError(oError.toString());
         return;
@@ -592,12 +714,12 @@ export default {
     }
   },
 
-  created()
+  async created()
   {
-    if (fs.existsSync(sDataFilePath)) {
+    if (fs.existsSync ? fs.existsSync(sDataFilePath) : await fs.exists(sDataFilePath)) {
       try {
         var oThis = this;
-        var oData = JSON.parse(fs.readFileSync(sDataFilePath).toString());
+        var oData = JSON.parse(await fs.readFile(sDataFilePath).toString());
         var aKeys = Object.keys(oData);
 
         aKeys.forEach((sKey) => { 

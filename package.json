@@ -15,7 +15,16 @@
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",
+    "chrome-debug": "^1.0.0",
+    "chrome-depd": "^1.0.1",
+    "chrome-dgram": "^3.0.4",
+    "chrome-fs": "^10.0.0",
+    "chrome-https": "^2.0.1",
+    "chrome-net": "^3.3.3",
+    "chrome-path": "^1.0.0",
+    "chrome-util-deprecate": "^1.0.0",
     "cuid": "^2.1.6",
+    "http-node": "^1.2.0",
     "quasar": "^1.0.0",
     "vue-codemirror": "^4.0.6"
   },
