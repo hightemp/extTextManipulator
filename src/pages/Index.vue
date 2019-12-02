@@ -390,6 +390,7 @@ import cuid from 'cuid';
 const deepcopy = require('deepcopy');
 const stackTrace = require('stack-trace');
 
+const file_backup = require('~/lib/file_backup.js').default;
 const fs = require('~/lib/fs.js').default;
 const utils = require('~/lib/utils.js').default;
 
@@ -397,7 +398,8 @@ const FILTER_REGEXP = "regexp";
 const FILTER_TEXT = "text";
 const FILTER_FUNCTION = "function";
 
-const sDataFilePath = './data.json';
+const sDataDirPath = './config';
+const sDataFilePath = `${sDataDirPath}/config.json`;
 
 import { Notify } from 'quasar'
 
@@ -804,7 +806,13 @@ export default {
       var sData = JSON.stringify(this.$data, null, 4);
 
       try {
-        await fs.writeFile(sDataFilePath, sData);
+        if (!await fs.exists(sDataDirPath)) {
+          await fs.mkdir(sDataDirPath, 0o777);
+        }
+        if (await fs.exists(sDataFilePath)) {
+          await file_backup(sDataFilePath, 50);
+        }
+        await fs.writeFile(sDataFilePath, sData, { mode: 0o777 });
       } catch (oError) {
         this.fnNotifyError(oError.toString());
         return;
@@ -835,7 +843,9 @@ export default {
   {
     console.log(stackTrace.get()[0].getFunctionName(), arguments);
 
-    if (await fs.exists(sDataFilePath)) {
+    if (!await fs.exists(sDataDirPath)) {
+      await fs.mkdir(sDataDirPath, 0o777);
+    } else if (await fs.exists(sDataFilePath)) {
       try {
         var oThis = this;
         var oBuffer = await fs.readFile(sDataFilePath);
@@ -861,10 +871,6 @@ export default {
     this.sSelectedTextBox = utils.fnGetFirstKey(this.oTextBoxes);
 
     await this.fnSaveLoop();
-
-    this.$on('change', (event) => {
-      console.log(event);
-    })
   }
 }
 </script>

@@ -25,6 +25,7 @@
     "chrome-util-deprecate": "^1.0.0",
     "cuid": "^2.1.6",
     "deepcopy": "^2.0.0",
+    "file-backup": "^1.0.1",
     "http-node": "^1.2.0",
     "quasar": "^1.0.0",
     "stack-trace": "0.0.10",
