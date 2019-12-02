@@ -14,11 +14,11 @@ aKeys.forEach((sKey) => {
         return new Promise((fnSuccess, fnFail) => {
             if (fs[sKey+'Sync']) {
                 console.log(`${sKey}Sync`, aArgs);
-                fs[sKey+'Sync'](...aArgs);
+                fnSuccess(fs[sKey+'Sync'](...aArgs));
             } else {
                 console.log(`${sKey}`, aArgs);
                 fs[sKey](...aArgs, (...aCallbackArgs) => {
-                    console.log(`${sKey} - callback`, aCallbackArgs);
+                    //console.log(`${sKey} - callback`, aCallbackArgs);
                     fnSuccess(...aCallbackArgs);
                 });
             }

@@ -1,5 +1,10 @@
 <template>
   <q-page class="flex">
+
+    <GlobalEvents
+      @keyup.ctrl.s="fnSaveData(true)"
+      @change="fnSaveData(true)"
+    />
     
     <q-splitter
       v-model="iTextBoxSplitter"
@@ -75,24 +80,25 @@
                       :label="oResultItem.sName ? oResultItem.sName : 'Undefined'" 
                       v-for="(oResultItem, sResultID) in oTextBox.oResults"
                     />
-                    <q-btn 
-                      color="primary" 
-                      icon="loop"
-                      @click="fnReuseResultTab" 
-                      flat 
-                      unelevated 
-                      class="col-auto q-ml-auto"
-                      v-if="oTextBox.sSelectedResultTab"
-                    />
-                    <q-btn 
-                      color="primary" 
-                      icon="close" 
-                      @click="fnRemoveResultTab(oTextBox, sResultID)" 
-                      flat 
-                      unelevated 
-                      class="col-auto q-ml-sm"
-                      v-if="oTextBox.sSelectedResultTab"
-                    />
+                      <q-btn 
+                        color="primary" 
+                        icon="loop"
+                        @click="fnReuseResultTab" 
+                        flat 
+                        unelevated 
+                        class="col-auto q-ml-auto"
+                        v-if="oTextBox.sSelectedResultTab"
+                      />
+                      <q-btn 
+                        color="primary" 
+                        icon="close" 
+                        @click="fnRemoveResultTab(oTextBox, sResultID)" 
+                        flat 
+                        unelevated 
+                        class="col-auto q-ml-sm"
+                        v-if="oTextBox.sSelectedResultTab"
+                      />
+                    </q-tab>
                   </q-tabs>
 
                   <q-separator />
@@ -100,6 +106,7 @@
                   <q-tab-panels 
                     v-model="oTextBox.sSelectedResultTab" 
                     class="flex"
+                    style="height: calc(100% - 32px)"
                   >
                     <q-tab-panel 
                       :name="sResultID" 
@@ -115,6 +122,52 @@
                           label="Name" 
                           class="col-auto"
                         />
+                        <q-scroll-area
+                          :thumb-style="oScollbarThumbStyle"
+                          :bar-style="oScollbarBarStyle"
+                          style="border: 1px solid #eee"
+                          class="col-5"
+                        >
+                          <q-list bordered separator>
+                            <q-item
+                              v-for="(oFilter, sFilterID) in oResultItem.oFilters"
+                              clickable 
+                              v-ripple
+                              dense
+                              :active="oResultItem.sSelectedFilter==sFilterID"
+                              @click="fnSetSelectedFilterForResultItem(oResultItem, sFilterID)"
+                            >
+                              <q-item-section>
+                                <q-item-label>{{ oFilter.sName ? oFilter.sName : 'Undefined' }}</q-item-label>
+                                <q-item-label caption lines="2">
+                                  <small v-if="oFilter.sType=='regexp'">/{{ oFilter.sRegExp }}/{{ oFilter.sFlags }}</small>
+                                  <small v-if="oFilter.sType=='text'">{{ oFilter.sSubString }}</small>
+                                </q-item-label>
+                              </q-item-section>
+
+                              <q-item-section side>
+                                <q-item-label caption>{{ oFilter.sType }}</q-item-label>
+                              </q-item-section>
+                            </q-item>
+                          </q-list>                        
+                        </q-scroll-area>
+                        <!--
+                        {{ oResultItem.oFilters[oResultItem.sSelectedFilter] }}
+                        {{ oResultItem.sSelectedFilter }}
+                        <div class="col-5" v-if="oResultItem.oFilters[oResultItem.sSelectedFilter]">
+                          <b>Name:</b> {{ oResultItem.oFilters[oResultItem.sSelectedFilter].sName }}<br>
+                          <b>Type:</b> {{ oResultItem.oFilters[oResultItem.sSelectedFilter].sType }}<br>
+                          <div v-if="oResultItem.oFilters[oResultItem.sSelectedFilter].sType='regexp'">
+                            <b>RegExp:</b> /{{ oResultItem.oFilters[oResultItem.sSelectedFilter].sRegexp }}/{{ oResultItem.oFilters[oResultItem.sSelectedFilter].sFlags }}<br>
+                          </div>
+                          <div v-if="oResultItem.oFilters[oResultItem.sSelectedFilter].sType='text'">
+                            <b>Substring:</b> {{ oResultItem.oFilters[oResultItem.sSelectedFilter].sSubString }}<br>
+                          </div>
+                          <div v-if="oResultItem.oFilters[oResultItem.sSelectedFilter].sType='function'">
+                            <b>Function:</b> {{ oResultItem.oFilters[oResultItem.sSelectedFilter].sFunction }}<br>
+                          </div>
+                        </div>
+                        -->
                       </div>
                       <div class="col flex q-pl-sm">
                         <q-scroll-area
@@ -166,7 +219,7 @@
                           </q-item-section>
                         </q-item>
 
-                        <q-item clickable v-close-popup @click="fnExecuteFilters">
+                        <q-item clickable v-close-popup @click="fnExecuteFilters" :disable="!fnHasSelectedFilters()">
                           <q-item-section>
                             <q-item-label>Execute</q-item-label>
                           </q-item-section>
@@ -327,6 +380,8 @@
 import { codemirror } from 'vue-codemirror'
 import Vue from 'vue'
 
+import GlobalEvents from 'vue-global-events'
+
 // require styles
 import 'codemirror/lib/codemirror.css'
 import 'codemirror/addon/edit/matchbrackets.js'
@@ -335,6 +390,9 @@ import 'codemirror/addon/comment/comment.js'
 import 'codemirror/mode/javascript/javascript.js'
 
 import cuid from 'cuid';
+
+const deepcopy = require('deepcopy');
+const stackTrace = require('stack-trace');
 
 const fs = require('~/lib/fs.js').default;
 const utils = require('~/lib/utils.js').default;
@@ -358,7 +416,8 @@ export default {
   name: 'PageIndex',
 
   components: {
-    codemirror
+    codemirror,
+    GlobalEvents
   },
 
   data()
@@ -380,6 +439,7 @@ export default {
             guid1: {
               sName: 'Undefined',
               sResultText: '123',
+              sSelectedFilter: '',
               oFilters: {
                 guid1: {
                   bSelected: false,
@@ -471,7 +531,8 @@ export default {
       },
       sFiltersFilterText: '',
 
-      iSaveTimeout: 5000,
+      iSaveTimerID: -1,
+      iSaveTimeout: 15000,
       iTextBoxSplitter: 10
     }
   },
@@ -503,31 +564,36 @@ export default {
   methods: {
     fnOnCmReady(oCM)
     {
-
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
     },
     fnOnCmFocus(oCM)
     {
-
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
     },
     fnOnCmCodeChange(sNewText, oTextBox)
     {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
       oTextBox.sTextArea = sNewText;
     },
     fnOnFilterCmCodeChange(sNewText, sSelectedFilter)
     {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
       this.oFilters[sSelectedFilter].sFunction = sNewText;
     },
     fnFilterFilter(oFilter)
     {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
       return ~oFilter.sName.indexOf(this.sFiltersFilterText);
     },
     fnSelectFilter(sFilterID)
     {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
       // this.sSelectedFilter = sFilterID;
       // sSelectedFilterType
     },
     fnChangeFilterType(sValue, sSelectedFilter)
     {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
       var aAttributes = [ "sRegExp", "sFlags", "sSubString", "sFunction" ];
 
       var oFilter = this.oFilters[sSelectedFilter];
@@ -549,6 +615,7 @@ export default {
     },
     fnAddFilter()
     {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
       var sCUID = cuid();
 
       Vue.set(this.oFilters, sCUID, {
@@ -564,6 +631,7 @@ export default {
     },
     fnRemoveFilters()
     {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
       var oThis = this;
       var aKeys = Object.keys(oThis.oFilters);
 
@@ -579,9 +647,32 @@ export default {
         }
       });
     },
+    fnHasSelectedFilters()
+    {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
+      var oThis = this;
+      var aKeys = Object.keys(oThis.oFilters);
+      var bSelected = false;
+
+      for (var sKey of aKeys) {
+        var oFilter = oThis.oFilters[sKey];
+        if (oFilter && oFilter.bSelected) {
+          bSelected = true;
+          break;
+        }
+      }
+
+      console.log('fnHasSelectedFilters', bSelected);
+
+      return bSelected;
+    },
+    fnSetSelectedFilterForResultItem(oResultItem, sFilterID)
+    {
+      Vue.set(oResultItem, 'sSelectedFilter', sFilterID);
+    },
     fnExecuteFilters()
     {
-      console.log(`this.sSelectedTextBox ${this.sSelectedTextBox}`);
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
       var oThis = this;
       var oTextBox = this.oTextBoxes[this.sSelectedTextBox];
       var aKeys = Object.keys(oThis.oFilters);
@@ -609,7 +700,7 @@ export default {
           sResult = fnFunction(sResult);
         }
 
-        oSelectedFilters[sKey] = oFilter
+        oSelectedFilters[sKey] = deepcopy(oFilter);
       });
 
       var sCUID = cuid();
@@ -620,10 +711,13 @@ export default {
         oFilters: oSelectedFilters
       });
 
+      this.oTextBoxes[this.sSelectedTextBox].sSelectedResultTab = sCUID;
+
       console.log(`oTextBox.oResults`, oTextBox.oResults)
     },
     fnReuseResultTab()
     {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
       var oThis = this;
       var oTextBox = this.oTextBoxes[this.sSelectedTextBox];
       var oResultItem = oTextBox.oResults[oTextBox.sSelectedResultTab];
@@ -651,6 +745,7 @@ export default {
     },
     fnAddTextBox()
     {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
       var sCUID = cuid();
 
       Vue.set(
@@ -669,75 +764,95 @@ export default {
     },
     fnRemoveTextBox()
     {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
       Vue.delete(this.oTextBoxes, this.sSelectedTextBox);
 
       this.sSelectedTextBox = '';
     },
     fnRemoveResultTab(oTextBox, sResultID)
     {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
       Vue.delete(oTextBox.oResults, sResultID);
 
       oTextBox.sSelectedResultTab = utils.fnGetFirstKey(oTextBox.oResults);
     },
     fnNotifyError(sMessage)
     {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
       this.$q.notify({ color: 'negative', message: sMessage, icon: 'report_problem' });
     },
     fnNotifySuccess(sMessage)
     {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
       this.$q.notify({ message: sMessage, icon: 'thumb_up' });
     },
-    async fnSaveData()
+    async fnSaveData(bShowNotification=false)
     {
-      console.log('fnSaveData');
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
       var sData = JSON.stringify(this.$data, null, 4);
 
       try {
         await fs.writeFile(sDataFilePath, sData);
-        console.log(sDataFilePath, sData)
       } catch (oError) {
         this.fnNotifyError(oError.toString());
         return;
       }
 
-      //this.fnNotifySuccess("Data saved");
+      if (bShowNotification) {
+        this.fnNotifySuccess("Data saved");
+      }
     },
     async fnSaveLoop()
     {
-      console.log('fnSaveLoop');
+      console.log(stackTrace.get()[0].getFunctionName(), this.iSaveTimerID);
+
+      if (!this.iSaveTimerID)
+        return;
+
+      console.log(`this.iSaveTimerID ${this.iSaveTimerID}`);
+
+      this.iSaveTimerID = 0;
 
       await this.fnSaveData();
 
-      setTimeout(this.fnSaveLoop, this.iSaveTimeout);
+      this.iSaveTimerID = setTimeout(this.fnSaveLoop, this.iSaveTimeout);
     }
   },
 
   async created()
   {
-    console.log('created');
+    console.log(stackTrace.get()[0].getFunctionName(), arguments);
 
     if (await fs.exists(sDataFilePath)) {
       try {
         var oThis = this;
-        console.log('created 2');
-        var oData = JSON.parse(await fs.readFile(sDataFilePath).toString());
-        var aKeys = Object.keys(oData);
+        var oBuffer = await fs.readFile(sDataFilePath);
+        var oData = JSON.parse(oBuffer.toString());
+//        var aKeys = Object.keys(oData);
 
-        console.log('created 3');
+        console.log('oData', oData);
+
+        Object.assign(oThis.$data, oData);
+/*
         aKeys.forEach((sKey) => { 
           Vue.set(oThis.$data, sKey, oData[sKey]);
         });
+*/
+        console.log('oThis.$data', oThis.$data);
       } catch (oError) {
         this.fnNotifyError(oError.toString());
       }
     }
-    console.log('created 4');
+
+    this.iSaveTimerID = -1;
 
     this.sSelectedTextBox = utils.fnGetFirstKey(this.oTextBoxes);
 
-    console.log('created 5');
-
     await this.fnSaveLoop();
+
+    this.$on('change', (event) => {
+      console.log(event);
+    })
   }
 }
 </script>
