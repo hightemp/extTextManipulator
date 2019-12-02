@@ -54,6 +54,7 @@
                     class="col"
                   />
                   <q-btn-toggle
+                    flat
                     square 
                     unelevated 
                     class="col-auto"
@@ -65,6 +66,7 @@
                     ]"
                   />
                   <q-btn 
+                    flat
                     color="negative" 
                     icon="delete" 
                     @click="fnRemoveTextBox" 
@@ -916,7 +918,11 @@ export default {
           await fs.mkdir(sDataDirPath, 0o777);
         }
         if (await fs.exists(sDataFilePath)) {
-          await file_backup(sDataFilePath, 50);
+          try {
+            await file_backup(sDataFilePath, 50);
+          } catch (oFileBackupError) {
+            console.error(oFileBackupError);
+          }
         }
         await fs.writeFile(sDataFilePath, sData, { mode: 0o777 });
       } catch (oError) {
