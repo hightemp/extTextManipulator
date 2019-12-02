@@ -151,23 +151,19 @@
                             </q-item>
                           </q-list>                        
                         </q-scroll-area>
-                        <!--
-                        {{ oResultItem.oFilters[oResultItem.sSelectedFilter] }}
-                        {{ oResultItem.sSelectedFilter }}
-                        <div class="col-5" v-if="oResultItem.oFilters[oResultItem.sSelectedFilter]">
-                          <b>Name:</b> {{ oResultItem.oFilters[oResultItem.sSelectedFilter].sName }}<br>
-                          <b>Type:</b> {{ oResultItem.oFilters[oResultItem.sSelectedFilter].sType }}<br>
-                          <div v-if="oResultItem.oFilters[oResultItem.sSelectedFilter].sType='regexp'">
-                            <b>RegExp:</b> /{{ oResultItem.oFilters[oResultItem.sSelectedFilter].sRegexp }}/{{ oResultItem.oFilters[oResultItem.sSelectedFilter].sFlags }}<br>
+                        <div class="col-5 q-pt-sm" v-if="oSelectedResultItemFilter">
+                          <b>Name:</b> {{ oSelectedResultItemFilter.sName }}<br>
+                          <b>Type:</b> {{ oSelectedResultItemFilter.sType }}<br>
+                          <div v-if="oSelectedResultItemFilter.sType=='regexp'">
+                            <b>RegExp:</b> /{{ oSelectedResultItemFilter.sRegexp }}/{{ oResultItem.oFilters[oResultItem.sSelectedFilter].sFlags }}<br>
                           </div>
-                          <div v-if="oResultItem.oFilters[oResultItem.sSelectedFilter].sType='text'">
-                            <b>Substring:</b> {{ oResultItem.oFilters[oResultItem.sSelectedFilter].sSubString }}<br>
+                          <div v-if="oSelectedResultItemFilter.sType=='text'">
+                            <b>Substring:</b> {{ oSelectedResultItemFilter.sSubString }}<br>
                           </div>
-                          <div v-if="oResultItem.oFilters[oResultItem.sSelectedFilter].sType='function'">
-                            <b>Function:</b> {{ oResultItem.oFilters[oResultItem.sSelectedFilter].sFunction }}<br>
+                          <div v-if="oSelectedResultItemFilter.sType=='function'">
+                            <b>Function:</b> {{ oSelectedResultItemFilter.sFunction }}<br>
                           </div>
                         </div>
-                        -->
                       </div>
                       <div class="col flex q-pl-sm">
                         <q-scroll-area
@@ -558,6 +554,22 @@ export default {
         width: '9px',
         opacity: 0.2
       }
+    },
+
+    oSelectedTextBox()
+    {
+      return this.oTextBoxes[this.sSelectedTextBox];
+    },
+
+    oSelectedResultItemFilter()
+    {
+      var oTextBox = this.oSelectedTextBox;
+      var oResultItem = oTextBox.oResults[oTextBox.sSelectedResultTab];
+
+      if (!oResultItem || !oResultItem.oFilters)
+        return undefined;
+
+      return oResultItem.oFilters[oResultItem.sSelectedFilter];
     }
   },
 
