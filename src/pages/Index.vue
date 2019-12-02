@@ -53,7 +53,25 @@
                     label="Name" 
                     class="col"
                   />
-                  <q-btn color="negative" label="Remove" @click="fnRemoveTextBox" square unelevated class="col-auto"/>
+                  <q-btn-toggle
+                    square 
+                    unelevated 
+                    class="col-auto"
+                    v-model="bPasteAsText"
+                    toggle-color="primary"
+                    :options="[
+                      {label: 'text', value: true},
+                      {label: 'html', value: false}
+                    ]"
+                  />
+                  <q-btn 
+                    color="negative" 
+                    icon="delete" 
+                    @click="fnRemoveTextBox" 
+                    square 
+                    unelevated 
+                    class="col-auto"
+                  />
                 </div>
                 <codemirror
                   ref="cm_editor"
@@ -509,6 +527,8 @@ export default {
       sSelectedFilterType: "",
       sSelectedTextBox: '',
 
+      bPasteAsText: false,
+
       oApplicationSettings: {
         sHomePath: '',
         sConfigurationPath: ''
@@ -576,9 +596,95 @@ export default {
   },
 
   methods: {
-    fnOnCmReady(oCM)
+    fnOnCmReady(oCodeMirror)
     {
       console.log(stackTrace.get()[0].getFunctionName(), arguments);
+
+      this.fnSetCodemirrorEventHandlers(oCodeMirror)
+    },
+    fnSetCodemirrorEventHandlers(oCodeMirror)
+    {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
+
+      var oThis = this;
+
+      console.log(oCodeMirror);
+
+      oCodeMirror
+        .on(
+          'paste', 
+          function(oCodeMirror, oEvent) 
+          {
+            console.log('codemirror - paste', oCodeMirror, oEvent);
+
+            var oClipboardData = (oEvent.clipboardData || window.clipboardData);
+
+            /*
+            for (var iIndex in oClipboardData.items)
+            {
+                var oItem = oClipboardData.items[iIndex];
+
+                if (oItem.kind == 'file') {
+                    window.oApplication.bShowLoadingScreen = true;
+
+                    var oFile = oItem.getAsFile();
+
+                    var oFormData = new FormData();
+
+                    oFormData.append('action', 'upload_images');
+                    oFormData.append('repository', oThis.oRepository.sName);
+                    oFormData.append('pasted_files[]', oFile);
+
+                    oThis
+                        .$http
+                        .post(
+                            '',
+                            oFormData
+                        ).then(function(oResponse)
+                        {
+                            window.oApplication.bShowLoadingScreen = false;
+
+                            if (oResponse.body.status=='error') {
+                                oThis.$snotify.error(oResponse.body.message, 'Error');
+                                return;
+                            }
+
+                            oCodeMirror.replaceSelection('![](/images/'+oResponse.body.data[0]+')');
+                        })
+                        .catch(function(sError)
+                        {
+                            oThis.$snotify.error(sError);
+                            window.oApplication.bShowLoadingScreen = false;
+                        });
+
+                    return;
+                }
+            }
+            */
+
+            if (oThis.bPasteAsText) {
+              var sText = oClipboardData.getData('text/plain');
+              oCodeMirror.replaceSelection(sText);
+
+              oEvent.preventDefault();
+              return;
+            }
+
+            if (~oClipboardData.types.indexOf('text/html')) {
+
+              for (var iIndex in oClipboardData.items) {
+                var oItem = oClipboardData.items[iIndex];
+
+                if (oItem.type=='text/html') {
+                  oItem.getAsString(s => oCodeMirror.replaceSelection(s));
+                }
+              }
+
+              oEvent.preventDefault();
+              return;
+            }
+          }
+      );      
     },
     fnOnCmFocus(oCM)
     {
