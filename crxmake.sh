@@ -2,7 +2,9 @@
 #
 # Purpose: Pack a Chromium extension directory into crx format
 
-if [ "$1" = "-d" ];then
+echo "[!] Packaging.."
+
+if [ "$2" = "-d" ];then
   set -x
 fi
 
@@ -11,11 +13,11 @@ fi
 #   exit 1
 # fi
 
-# dir=$(realpath $1)
+dir=$(realpath $1)
 # key=$(realpath $2)
 
-# echo "dir: $dir"
-# echo "key: $key"
+echo "[!] dir: $dir"
+# echo "[!] key: $key"
 
 cwd=$(pwd -P)
 

@@ -211,14 +211,14 @@
                 <q-linear-progress 
                   class="col-auto"
                   size="25px" 
-                  :value="istorageFullnessSize/istorageSize" 
+                  :value="iStorageFullnessSize/iStorageSize" 
                   color="accent"
                 >
                   <div class="absolute-full flex flex-center">
                     <q-badge 
                       color="white" 
                       text-color="accent" 
-                      :label="fnFormatSize(istorageFullnessSize)+'/'+fnFormatSize(istorageSize)" 
+                      :label="fnFormatSize(iStorageFullnessSize)+'/'+fnFormatSize(iStorageSize)" 
                     />
                   </div>
                 </q-linear-progress>
@@ -475,17 +475,17 @@
 <script>
 
 // require component
-import { codemirror } from 'vue-codemirror'
-import Vue from 'vue'
+import { codemirror } from 'vue-codemirror';
+import Vue from 'vue';
 
-import GlobalEvents from 'vue-global-events'
+import GlobalEvents from 'vue-global-events';
 
 // require styles
-import 'codemirror/lib/codemirror.css'
-import 'codemirror/addon/edit/matchbrackets.js'
-import 'codemirror/addon/comment/continuecomment.js'
-import 'codemirror/addon/comment/comment.js'
-import 'codemirror/mode/javascript/javascript.js'
+import 'codemirror/lib/codemirror.css';
+import 'codemirror/addon/edit/matchbrackets.js';
+import 'codemirror/addon/comment/continuecomment.js';
+import 'codemirror/addon/comment/comment.js';
+import 'codemirror/mode/javascript/javascript.js';
 
 import cuid from 'cuid';
 
@@ -507,14 +507,14 @@ const FILTER_FUNCTION = "function";
 const sDataDirPath = './config';
 const sDataFilePath = `${sDataDirPath}/config.json`;
 
-import { Notify } from 'quasar'
+import { Notify } from 'quasar';
 
 Notify.setDefaults({
   position: 'top-right',
   timeout: 2500,
   textColor: 'white',
   actions: [{ icon: 'close', color: 'white' }]
-})
+});
 
 export default {
   name: 'PageIndex',
@@ -629,7 +629,8 @@ export default {
       sSelectedFilterType: "",
       sSelectedTextBox: '',
 
-      istorageSize: 0,
+      iStorageSize: 0,
+      iStorageFullnessSize: 0,
 
       bPasteAsText: false,
 
@@ -725,22 +726,21 @@ export default {
         return undefined;
 
       return oResultItem.oFilters[oResultItem.sSelectedFilter];
-    },
-
-    istorageFullnessSize()
-    {
-      console.log(stackTrace.get()[0].getFunctionName(), arguments);
-
-      return storage.getItem('config').length*1;
     }
   },
 
   methods: {
+    async fnCalcStorageFullnessSize()
+    {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
+
+      this.iStorageFullnessSize = await storage.getItem('config').length*1;
+    },
     fnCalcstorageSize()
     {
       console.log(stackTrace.get()[0].getFunctionName(), arguments);
 
-      this.istorageSize = 10 * 1024 * 1024;
+      this.iStorageSize = 10 * 1024 * 1024;
 
       return;
 
@@ -758,7 +758,7 @@ export default {
         }
       }
 
-      this.istorageSize = storage.getItem('size')*1;
+      this.iStorageSize = storage.getItem('size')*1;
     },
     fnFormatSize(iValue)
     {
@@ -1204,19 +1204,7 @@ export default {
 
       try {
         await storage.setItem('config', sData);
-        /*
-        if (!await fs.exists(sDataDirPath)) {
-          await fs.mkdir(sDataDirPath, 0o777);
-        }
-        if (await fs.exists(sDataFilePath)) {
-          try {
-            await file_backup(sDataFilePath, 50);
-          } catch (oFileBackupError) {
-            console.error(oFileBackupError);
-          }
-        }
-        await fs.writeFile(sDataFilePath, sData, { mode: 0o777 });
-        */
+        await this.fnCalcStorageFullnessSize();
       } catch (oError) {
         this.fnNotifyError(oError.toString());
         return;
@@ -1243,17 +1231,10 @@ export default {
     },
     async fnLoadData()
     {
-/*
-    if (!await fs.exists(sDataDirPath)) {
-      await fs.mkdir(sDataDirPath, 0o777);
-    } else if (await fs.exists(sDataFilePath)) {
-*/
       var sData;
 
       try {
         var oThis = this;
-        //var oBuffer = await fs.readFile(sDataFilePath);
-        //var sData = oBuffer.toString();
 
         sData = await storage.getItem('config');
 
@@ -1261,31 +1242,27 @@ export default {
 
         if (sData) {
           var oData = JSON.parse(sData);
-  //        var aKeys = Object.keys(oData);
 
           console.log('oData', oData);
 
           Object.assign(oThis.$data, oData);
-  /*
-          aKeys.forEach((sKey) => { 
-            Vue.set(oThis.$data, sKey, oData[sKey]);
-          });
-  */
+
           console.log('oThis.$data', oThis.$data);
         }
       } catch (oError) {
         this.fnNotifyError(oError.toString());
 
         if (sData) {
-          var sstorageItemName = 'config_'+moment().unix();
-          var sMessage = `config saved to '${sstorageItemName}'`;
+          var sStorageItemName = 'config_'+moment().unix();
+          var sMessage = `config saved to '${sStorageItemName}'`;
           this.fnNotifyError(sMessage);
-          console.log(sMessage);
+          console.error(sMessage);
 
-          storage.setItem(sstorageItemName, sData);
+          await storage.setItem(sStorageItemName, sData);
         }
       }
-  //    }
+          
+      await this.fnSaveData();
     }
   },
 
