@@ -1,6 +1,6 @@
 <template>
   <q-page class="flex">
-
+    
     <GlobalEvents
       @keyup.ctrl.s="fnSaveData(true)"
       @change="fnSaveData(true)"
@@ -42,7 +42,6 @@
           >
 
               <div class="col-8 column">
-                <!--div class="col-auto text-h6 q-mb-sm">{{ oTextBox.sName }}</div-->
                 <div class="col-auto q-mb-sm row">
                   <q-input
                     ref="textbox_name"
@@ -142,6 +141,14 @@
                           label="Name" 
                           class="col-auto"
                         />
+                        <q-input 
+                          outlined 
+                          square 
+                          v-model="oResultItem.sFiltersFilter" 
+                          dense
+                          label="Filter" 
+                          class="col-auto"
+                        />
                         <q-scroll-area
                           :thumb-style="oScollbarThumbStyle"
                           :bar-style="oScollbarBarStyle"
@@ -151,6 +158,7 @@
                           <q-list bordered separator>
                             <q-item
                               v-for="(oFilter, sFilterID) in oResultItem.oFilters"
+                              v-if="!oResultItem.sFiltersFilter || ~oFilter.sName.indexOf(oResultItem.sFiltersFilter)"
                               clickable 
                               v-ripple
                               dense
@@ -171,11 +179,11 @@
                             </q-item>
                           </q-list>                        
                         </q-scroll-area>
-                        <div class="col-5 q-pt-sm" v-if="oSelectedResultItemFilter">
+                        <div class="col-4 q-pa-sm" v-if="oSelectedResultItemFilter">
                           <b>Name:</b> {{ oSelectedResultItemFilter.sName }}<br>
                           <b>Type:</b> {{ oSelectedResultItemFilter.sType }}<br>
                           <div v-if="oSelectedResultItemFilter.sType=='regexp'">
-                            <b>RegExp:</b> /{{ oSelectedResultItemFilter.sRegexp }}/{{ oResultItem.oFilters[oResultItem.sSelectedFilter].sFlags }}<br>
+                            <b>RegExp:</b> /{{ oSelectedResultItemFilter.sRegExp }}/{{ oSelectedResultItemFilter.sFlags }}<br>
                           </div>
                           <div v-if="oSelectedResultItemFilter.sType=='text'">
                             <b>Substring:</b> {{ oSelectedResultItemFilter.sSubString }}<br>
@@ -200,9 +208,75 @@
                 </div>             
               </div>
               <div class="col-4 column q-pl-md">
+                <q-linear-progress 
+                  class="col-auto"
+                  size="25px" 
+                  :value="iLocalStorageFullnessSize/iLocalStorageSize" 
+                  color="accent"
+                >
+                  <div class="absolute-full flex flex-center">
+                    <q-badge 
+                      color="white" 
+                      text-color="accent" 
+                      :label="fnFormatSize(iLocalStorageFullnessSize)+'/'+fnFormatSize(iLocalStorageSize)" 
+                    />
+                  </div>
+                </q-linear-progress>
                 <div class="col-auto text-h6 q-mb-sm">Filters</div>
                 <div class="col-5 column">
-                  <div class="row col-auto">
+                  <div class="row col-auto q-pb-sm">
+                    <q-select
+                      class="col"
+                      filled
+                      dense
+                      v-model="sSelectedGroup"
+                      use-input
+                      clearable
+                      input-debounce="0"
+                      label="Groups"
+                      :options="aFiltersGroupsOptions"
+                      @new-value="fnAddFiltersGroups"
+                      @filter="fnFilterGroups"
+                      @input="fnUpdateGroupCheckboxes"
+                    >
+                      <template v-slot:no-option>
+                        <q-item>
+                          <q-item-section class="text-grey">
+                            No results
+                          </q-item-section>
+                        </q-item>
+                      </template>
+                    </q-select>
+                    <q-btn-dropdown 
+                      color="primary" 
+                      class="col-2 dropdown-without-arrow" 
+                      dense 
+                      unelevated 
+                      dropdown-icon="none"
+                      flat
+                    >
+                      <template v-slot:label>
+                        <div class="row items-center no-wrap">
+                          <q-icon left name="more_horiz" />
+                        </div>
+                      </template>
+
+                      <q-list dense>
+                        <q-item clickable v-close-popup @click="fnAddFiltersGroups">
+                          <q-item-section>
+                            <q-item-label>Add</q-item-label>
+                          </q-item-section>
+                        </q-item>
+
+                        <q-item clickable v-close-popup @click="fnRemoveFilterssGroups">
+                          <q-item-section>
+                            <q-item-label>Remove</q-item-label>
+                          </q-item-section>
+                        </q-item>
+                      </q-list>
+                    </q-btn-dropdown>
+                  </div>
+                  <div class="row col-auto q-pb-sm">
                     <q-input 
                       outlined 
                       square 
@@ -215,7 +289,14 @@
                         <q-icon name="cancel" @click.stop="sFiltersFilterText = ''" class="cursor-pointer" />
                       </template>
                     </q-input>
-                    <q-btn-dropdown color="primary" class="col-2 dropdown-without-arrow" dense unelevated dropdown-icon="none">
+                    <q-btn-dropdown 
+                      color="primary" 
+                      class="col-2 dropdown-without-arrow" 
+                      dense 
+                      unelevated 
+                      flat
+                      dropdown-icon="none"
+                    >
                       <template v-slot:label>
                         <div class="row items-center no-wrap">
                           <q-icon left name="more_horiz" />
@@ -260,7 +341,10 @@
                         @click="sSelectedFilter = sFilterID"
                       >
                         <q-item-section side top>
-                          <q-checkbox v-model="oFilter.bSelected" />
+                          <q-checkbox 
+                            v-model="oFilter.bSelected" 
+                            @input="fnUpdateCurrentGroup" 
+                          />
                         </q-item-section>
                         <q-item-section>
                           <q-item-label>{{ oFilter.sName ? oFilter.sName : 'Undefined' }}</q-item-label>
@@ -272,14 +356,12 @@
 
                         <q-item-section side>
                           <q-item-label caption>{{ oFilter.sType }}</q-item-label>
-                          <!--q-icon name="star" color="yellow" /-->
                         </q-item-section>
                       </q-item>
                     </q-list>
                   </q-scroll-area>
                 </div>
-                <div class="col-6 column q-pt-md" v-if="sSelectedFilter!=''">
-                  <!--div class="col-auto text-h6 q-mb-sm">{{ oFilters[sSelectedFilter].sName }}</div-->
+                <div class="col-6 column q-pt-md" v-if="oFilters[sSelectedFilter]">
                   <q-input
                     ref="filter_name"
                     outlined 
@@ -410,6 +492,8 @@ import cuid from 'cuid';
 const deepcopy = require('deepcopy');
 const stackTrace = require('stack-trace');
 
+const moment = require('moment');
+
 const file_backup = require('~/lib/file_backup.js').default;
 const fs = require('~/lib/fs.js').default;
 const utils = require('~/lib/utils.js').default;
@@ -452,6 +536,7 @@ export default {
         guid1: {
           sName: 'Undefined',
           sSelectedResultTab: "",
+          sFiltersFilter: '',
           sTextArea: "Lorem ipsum dolor sit, amet consectetur adipisicing elit. Quis praesentium cumque magnam odio iure quidem, quod illum numquam possimus obcaecati commodi minima assumenda consectetur culpa fuga nulla ullam. In, libero.",
           oResults: {
             guid1: {
@@ -485,6 +570,7 @@ export default {
         guid2: {
           sName: 'Undefined 2',
           sSelectedResultTab: "",
+          sFiltersFilter: '',
           sTextArea: "Lorem ipsum dolor sit, amet consectetur adipisicing elit. Quis praesentium cumque magnam odio iure quidem, quod illum numquam possimus obcaecati commodi minima assumenda consectetur culpa fuga nulla ullam. In, libero.",
           oResults: {
             guid1: {
@@ -496,6 +582,17 @@ export default {
               sResultText: 'Lorem ipsum dolor sit'
             }
           }
+        }
+        */
+      },
+      oFiltersGroups: {
+        /*
+        guid1: {
+          sName: 'group1',
+          aFilters: [
+            'guid1',
+            'guid2'
+          ]
         }
         */
       },
@@ -525,9 +622,12 @@ export default {
         */
       },
 
+      sSelectedGroup: "",
       sSelectedFilter: "",
       sSelectedFilterType: "",
       sSelectedTextBox: '',
+
+      iLocalStorageSize: 0,
 
       bPasteAsText: false,
 
@@ -558,8 +658,10 @@ export default {
   },
 
   computed: {
-    oScollbarThumbStyle () 
+    oScollbarThumbStyle() 
     {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
+
       return {
         right: '4px',
         borderRadius: '5px',
@@ -569,24 +671,51 @@ export default {
       }
     },
 
-    oScollbarBarStyle () 
+    oScollbarBarStyle() 
     {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
+
       return {
         right: '2px',
         borderRadius: '9px',
         backgroundColor: '#027be3',
         width: '9px',
         opacity: 0.2
-      }
+      }      
+    },
+
+    aFiltersGroupsOptions: {
+      get()
+      {
+        console.log(stackTrace.get()[0].getFunctionName(), arguments);
+
+        var oThis = this;
+        var aKeys = Object.keys(oThis.oFiltersGroups);
+        var aNames = [];
+
+        aKeys.forEach((sKey) => {
+          //if (!oThis.sSelectedGroup || ~oThis.oFiltersGroups[sKey].sName.indexOf(oThis.sSelectedGroup))
+          aNames.push(oThis.oFiltersGroups[sKey].sName) 
+        });
+
+        console.log('>>> aNames', aNames);
+
+        return aNames;
+      },
+      cache: false
     },
 
     oSelectedTextBox()
     {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
+
       return this.oTextBoxes[this.sSelectedTextBox];
     },
 
     oSelectedResultItemFilter()
     {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
+
       var oTextBox = this.oSelectedTextBox;
       var oResultItem = oTextBox.oResults[oTextBox.sSelectedResultTab];
 
@@ -594,10 +723,55 @@ export default {
         return undefined;
 
       return oResultItem.oFilters[oResultItem.sSelectedFilter];
+    },
+
+    iLocalStorageFullnessSize()
+    {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
+
+      return localStorage.getItem('config').length*1;
     }
   },
 
   methods: {
+    fnCalcLocalStorageSize()
+    {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
+
+      this.iLocalStorageSize = 10 * 1024 * 1024;
+
+      return;
+
+      if (localStorage && !localStorage.getItem('size')) {
+        var i = 0;
+        try {
+          // Test up to 10 MB
+          for (i = 250; i <= 50000; i += 250) {
+              localStorage.setItem('test', new Array((i * 1024) + 1).join('a'));
+          }
+        } catch (e) {
+          localStorage.removeItem('test');
+          localStorage.setItem('size', i - 250);
+          console.log('>>> localStorage size', i - 250);
+        }
+      }
+
+      this.iLocalStorageSize = localStorage.getItem('size')*1;
+    },
+    fnFormatSize(iValue)
+    {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
+
+      var aSuffixes = [ 'B', 'KB', 'MB', 'GB' ];
+      var iSuffixIndex = 0;
+
+      while (iValue > 1024) {
+        iSuffixIndex++;
+        iValue /= 1024;
+      }
+
+      return `${Math.round(iValue, 2)} ${aSuffixes[iSuffixIndex]}`;
+    },
     fnOnCmReady(oCodeMirror)
     {
       console.log(stackTrace.get()[0].getFunctionName(), arguments);
@@ -764,7 +938,7 @@ export default {
           Vue.delete(oThis.oFilters, sKey);
           
           if (oThis.sSelectedFilter == sKey) {
-            oThis.sSelectedFilter = sKey;
+            oThis.sSelectedFilter = '';
           }
         }
       });
@@ -830,6 +1004,7 @@ export default {
       Vue.set(oResults, sCUID, {
         sName: '',
         sResultText: sResult,
+        sFiltersFilter: '',
         oFilters: oSelectedFilters
       });
 
@@ -898,6 +1073,118 @@ export default {
 
       oTextBox.sSelectedResultTab = utils.fnGetFirstKey(oTextBox.oResults);
     },
+    fnFindFilterGroup(sName)
+    {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
+      for (var sKey in this.oFiltersGroups) {
+        if (this.oFiltersGroups[sKey].sName==sName)
+          return sKey;
+      }
+    },
+    fnFilterGroups(sName, fnUpdate)
+    {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
+
+      var oThis = this;
+
+      fnUpdate(() => {
+        if (sName === '') {
+          this.options = oThis.aFiltersGroupsOptions;
+        } else {
+          const needle = sName.toLowerCase()
+          this.options = oThis.aFiltersGroupsOptions.filter(v => v.toLowerCase().indexOf(needle) > -1)
+        }
+      })
+    },
+    fnUpdateCurrentGroup()
+    {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
+      var oThis = this;
+
+      var sGroupKey = oThis.fnFindFilterGroup(oThis.sSelectedGroup);
+
+      if (!oThis.oFiltersGroups[sGroupKey])
+        return;
+
+      var aKeys = Object.keys(oThis.oFilters);
+      var aSelected = [];
+
+      aKeys.forEach((sKey) => { 
+        var oFilter = oThis.oFilters[sKey];
+
+        if (oFilter.bSelected) {
+          aSelected.push(sKey);
+        }
+      });
+      
+      oThis.oFiltersGroups[sGroupKey].aFilters = aSelected;
+    },
+    fnUpdateGroupCheckboxes(sName)
+    {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
+      var oThis = this;
+
+      var sGroupKey = oThis.fnFindFilterGroup(sName);
+      var oGroup = oThis.oFiltersGroups[sGroupKey] ? oThis.oFiltersGroups[sGroupKey] : { aFilters: [] };
+      console.log('>>> oGroup', oGroup, 'sGroupKey', sGroupKey);
+      var aKeys = Object.keys(oThis.oFilters);
+
+      aKeys.forEach((sKey) => { 
+        var oFilter = oThis.oFilters[sKey];
+
+        oFilter.bSelected = !!~oGroup.aFilters.indexOf(sKey);
+      });
+    },
+    fnAddFiltersGroups(sName, fnDone)
+    {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
+      var oThis = this;
+
+      if (!fnDone || !sName || ~oThis.aFiltersGroupsOptions.indexOf(sName)) 
+        return;
+      
+      var sCUID = cuid();
+      var aKeys = Object.keys(oThis.oFilters);
+      var aSelected = [];
+
+      aKeys.forEach((sKey) => { 
+        var oFilter = oThis.oFilters[sKey];
+
+        if (oFilter.bSelected) {
+          aSelected.push(sKey);
+        }
+      });
+
+      Vue.set(
+        oThis.oFiltersGroups, 
+        sCUID, 
+        {
+          sName: sName,
+          aFilters: aSelected
+        }
+      );
+
+      //oThis.sSelectedGroup = sName;
+
+      fnDone(sName, 'toggle');
+    },
+    fnRemoveFilterssGroups()
+    {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
+      var oThis = this;
+      var aGroups = oThis.aFiltersGroupsOptions;
+      
+      if (aGroups.length) {
+        var sGroupKey = this.fnFindFilterGroup(oThis.sSelectedGroup);
+
+        if (!oThis.oFiltersGroups[sGroupKey]) {
+          return;
+        }
+
+        Vue.delete(oThis.oFiltersGroups, sGroupKey);
+        oThis.sSelectedGroup = '';
+      }
+    },
     fnNotifyError(sMessage)
     {
       console.log(stackTrace.get()[0].getFunctionName(), arguments);
@@ -914,6 +1201,8 @@ export default {
       var sData = JSON.stringify(this.$data, null, 4);
 
       try {
+        localStorage.setItem('config', sData);
+        /*
         if (!await fs.exists(sDataDirPath)) {
           await fs.mkdir(sDataDirPath, 0o777);
         }
@@ -925,6 +1214,7 @@ export default {
           }
         }
         await fs.writeFile(sDataFilePath, sData, { mode: 0o777 });
+        */
       } catch (oError) {
         this.fnNotifyError(oError.toString());
         return;
@@ -948,6 +1238,52 @@ export default {
       await this.fnSaveData();
 
       this.iSaveTimerID = setTimeout(this.fnSaveLoop, this.iSaveTimeout);
+    },
+    fnLoadData()
+    {
+/*
+    if (!await fs.exists(sDataDirPath)) {
+      await fs.mkdir(sDataDirPath, 0o777);
+    } else if (await fs.exists(sDataFilePath)) {
+*/
+      var sData;
+
+      try {
+        var oThis = this;
+        //var oBuffer = await fs.readFile(sDataFilePath);
+        //var sData = oBuffer.toString();
+
+        sData = localStorage.getItem('config');
+
+        console.log('sData', sData);
+
+        if (sData) {
+          var oData = JSON.parse(sData);
+  //        var aKeys = Object.keys(oData);
+
+          console.log('oData', oData);
+
+          Object.assign(oThis.$data, oData);
+  /*
+          aKeys.forEach((sKey) => { 
+            Vue.set(oThis.$data, sKey, oData[sKey]);
+          });
+  */
+          console.log('oThis.$data', oThis.$data);
+        }
+      } catch (oError) {
+        this.fnNotifyError(oError.toString());
+
+        if (sData) {
+          var sLocalStorageItemName = 'config_'+moment().unix();
+          var sMessage = `config saved to '${sLocalStorageItemName}'`;
+          this.fnNotifyError(sMessage);
+          console.log(sMessage);
+
+          localStorage.setItem(sLocalStorageItemName, sData);
+        }
+      }
+  //    }
     }
   },
 
@@ -955,28 +1291,9 @@ export default {
   {
     console.log(stackTrace.get()[0].getFunctionName(), arguments);
 
-    if (!await fs.exists(sDataDirPath)) {
-      await fs.mkdir(sDataDirPath, 0o777);
-    } else if (await fs.exists(sDataFilePath)) {
-      try {
-        var oThis = this;
-        var oBuffer = await fs.readFile(sDataFilePath);
-        var oData = JSON.parse(oBuffer.toString());
-//        var aKeys = Object.keys(oData);
+    this.fnLoadData();
 
-        console.log('oData', oData);
-
-        Object.assign(oThis.$data, oData);
-/*
-        aKeys.forEach((sKey) => { 
-          Vue.set(oThis.$data, sKey, oData[sKey]);
-        });
-*/
-        console.log('oThis.$data', oThis.$data);
-      } catch (oError) {
-        this.fnNotifyError(oError.toString());
-      }
-    }
+    this.fnCalcLocalStorageSize();
 
     this.iSaveTimerID = -1;
 

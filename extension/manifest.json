@@ -9,6 +9,7 @@
     "128": "statics/icons/icon-128x128.png"
   },
   "permissions": [
+    "unlimitedStorage",
     "storage",
     "alarms",
     "background",
