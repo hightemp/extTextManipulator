@@ -2,20 +2,20 @@
 #
 # Purpose: Pack a Chromium extension directory into crx format
 
-if [ "$3" = "-d" ];then
+if [ "$1" = "-d" ];then
   set -x
 fi
 
-if test $# -lt 2; then
-  echo "Usage: crxmake.sh <extension dir> <pem path> [flags]"
-  exit 1
-fi
+# if test $# -lt 2; then
+#   echo "Usage: crxmake.sh <extension dir> <pem path> [flags]"
+#   exit 1
+# fi
 
-dir=$(realpath $1)
-key=$(realpath $2)
+# dir=$(realpath $1)
+# key=$(realpath $2)
 
-echo "dir: $dir"
-echo "key: $key"
+# echo "dir: $dir"
+# echo "key: $key"
 
 cwd=$(pwd -P)
 

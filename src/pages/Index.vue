@@ -211,14 +211,14 @@
                 <q-linear-progress 
                   class="col-auto"
                   size="25px" 
-                  :value="iLocalStorageFullnessSize/iLocalStorageSize" 
+                  :value="istorageFullnessSize/istorageSize" 
                   color="accent"
                 >
                   <div class="absolute-full flex flex-center">
                     <q-badge 
                       color="white" 
                       text-color="accent" 
-                      :label="fnFormatSize(iLocalStorageFullnessSize)+'/'+fnFormatSize(iLocalStorageSize)" 
+                      :label="fnFormatSize(istorageFullnessSize)+'/'+fnFormatSize(istorageSize)" 
                     />
                   </div>
                 </q-linear-progress>
@@ -498,6 +498,8 @@ const file_backup = require('~/lib/file_backup.js').default;
 const fs = require('~/lib/fs.js').default;
 const utils = require('~/lib/utils.js').default;
 
+const storage = require('~/lib/local_storage.js').default;
+
 const FILTER_REGEXP = "regexp";
 const FILTER_TEXT = "text";
 const FILTER_FUNCTION = "function";
@@ -627,7 +629,7 @@ export default {
       sSelectedFilterType: "",
       sSelectedTextBox: '',
 
-      iLocalStorageSize: 0,
+      istorageSize: 0,
 
       bPasteAsText: false,
 
@@ -725,38 +727,38 @@ export default {
       return oResultItem.oFilters[oResultItem.sSelectedFilter];
     },
 
-    iLocalStorageFullnessSize()
+    istorageFullnessSize()
     {
       console.log(stackTrace.get()[0].getFunctionName(), arguments);
 
-      return localStorage.getItem('config').length*1;
+      return storage.getItem('config').length*1;
     }
   },
 
   methods: {
-    fnCalcLocalStorageSize()
+    fnCalcstorageSize()
     {
       console.log(stackTrace.get()[0].getFunctionName(), arguments);
 
-      this.iLocalStorageSize = 10 * 1024 * 1024;
+      this.istorageSize = 10 * 1024 * 1024;
 
       return;
 
-      if (localStorage && !localStorage.getItem('size')) {
+      if (storage && !storage.getItem('size')) {
         var i = 0;
         try {
           // Test up to 10 MB
           for (i = 250; i <= 50000; i += 250) {
-              localStorage.setItem('test', new Array((i * 1024) + 1).join('a'));
+              storage.setItem('test', new Array((i * 1024) + 1).join('a'));
           }
         } catch (e) {
-          localStorage.removeItem('test');
-          localStorage.setItem('size', i - 250);
-          console.log('>>> localStorage size', i - 250);
+          storage.removeItem('test');
+          storage.setItem('size', i - 250);
+          console.log('>>> storage size', i - 250);
         }
       }
 
-      this.iLocalStorageSize = localStorage.getItem('size')*1;
+      this.istorageSize = storage.getItem('size')*1;
     },
     fnFormatSize(iValue)
     {
@@ -1201,7 +1203,7 @@ export default {
       var sData = JSON.stringify(this.$data, null, 4);
 
       try {
-        localStorage.setItem('config', sData);
+        await storage.setItem('config', sData);
         /*
         if (!await fs.exists(sDataDirPath)) {
           await fs.mkdir(sDataDirPath, 0o777);
@@ -1239,7 +1241,7 @@ export default {
 
       this.iSaveTimerID = setTimeout(this.fnSaveLoop, this.iSaveTimeout);
     },
-    fnLoadData()
+    async fnLoadData()
     {
 /*
     if (!await fs.exists(sDataDirPath)) {
@@ -1253,7 +1255,7 @@ export default {
         //var oBuffer = await fs.readFile(sDataFilePath);
         //var sData = oBuffer.toString();
 
-        sData = localStorage.getItem('config');
+        sData = await storage.getItem('config');
 
         console.log('sData', sData);
 
@@ -1275,12 +1277,12 @@ export default {
         this.fnNotifyError(oError.toString());
 
         if (sData) {
-          var sLocalStorageItemName = 'config_'+moment().unix();
-          var sMessage = `config saved to '${sLocalStorageItemName}'`;
+          var sstorageItemName = 'config_'+moment().unix();
+          var sMessage = `config saved to '${sstorageItemName}'`;
           this.fnNotifyError(sMessage);
           console.log(sMessage);
 
-          localStorage.setItem(sLocalStorageItemName, sData);
+          storage.setItem(sstorageItemName, sData);
         }
       }
   //    }
@@ -1291,9 +1293,9 @@ export default {
   {
     console.log(stackTrace.get()[0].getFunctionName(), arguments);
 
-    this.fnLoadData();
+    await this.fnLoadData();
 
-    this.fnCalcLocalStorageSize();
+    this.fnCalcstorageSize();
 
     this.iSaveTimerID = -1;
 
