@@ -139,7 +139,7 @@
                           v-model="oResultItem.sName" 
                           dense
                           label="Name" 
-                          class="col-auto"
+                          class="col-auto q-pb-sm"
                         />
                         <q-input 
                           outlined 
@@ -147,13 +147,13 @@
                           v-model="oResultItem.sFiltersFilter" 
                           dense
                           label="Filter" 
-                          class="col-auto"
+                          class="col-auto q-pb-sm"
                         />
                         <q-scroll-area
                           :thumb-style="oScollbarThumbStyle"
                           :bar-style="oScollbarBarStyle"
                           style="border: 1px solid #eee"
-                          class="col-5"
+                          class="col-5 q-pb-sm"
                         >
                           <q-list bordered separator>
                             <q-item
