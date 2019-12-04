@@ -996,7 +996,11 @@ export default {
           sResult = sResult.replace(oFilter.sSubString, oFilter.sReplacement);
         }
         if (oFilter.sType==FILTER_FUNCTION) {
-          eval('var fnFunction = '+oFilter.sFunction);
+          try {
+            eval('var fnFunction = '+oFilter.sFunction);
+          } catch (oError) {
+            oThis.fnNotifyError(oError);
+          }
           sResult = fnFunction(sResult);
         }
 
