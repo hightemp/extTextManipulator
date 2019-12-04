@@ -44,7 +44,28 @@ function fnReadAsText(oFileEntry, fnCallback, fnErrorCallBack)
     );
 }
 
-function fnWriteFileEntry(writableEntry, sData, fnCallback, fnErrorCallBack) 
+function waitForIO(writer, callback) {
+  // set a watchdog to avoid eventual locking:
+  var start = Date.now();
+  // wait for a few seconds
+  var reentrant = function() {
+    if (writer.readyState===writer.WRITING && Date.now()-start<4000) {
+      setTimeout(reentrant, 100);
+      return;
+    }
+    if (writer.readyState===writer.WRITING) {
+      console.error("Write operation taking too long, aborting!"+
+        " (current writer readyState is "+writer.readyState+")");
+      writer.abort();
+    } 
+    else {
+      callback();
+    }
+  };
+  setTimeout(reentrant, 100);
+}
+
+function fnWriteFileEntry(writableEntry, sData) 
 {
     return new Promise((fnSuccess, fnFail) => {
         if (!writableEntry) {
@@ -55,10 +76,16 @@ function fnWriteFileEntry(writableEntry, sData, fnCallback, fnErrorCallBack)
         writableEntry.createWriter(
             function(writer) 
             {
-                writer.onerror = fnErrorCallBack;
-                writer.onwriteend = fnCallback;
+                writer.onerror = (e) => {
+                    fnFail(e);
+                };
+                writer.onwriteend = () => {
+                    fnSuccess();
+                };
 
-                let opt_blob = Blob([sData], { type: "text/plain" });
+                console.log('>>> writableEntry.createWriter sData', sData);
+
+                let opt_blob = new Blob([sData], { type: "text/plain" });
 
                 // If we have data, write it to the file. Otherwise, just use the file we
                 // loaded.
@@ -67,11 +94,12 @@ function fnWriteFileEntry(writableEntry, sData, fnCallback, fnErrorCallBack)
                     waitForIO(writer, function() {
                         writer.seek(0);
                         writer.write(opt_blob);
-                        fnSuccess();
                     });
                 }
             }, 
-            fnErrorCallBack
+            (e) => {
+                fnFail(e);
+            }
         );
     });
 }
@@ -79,7 +107,7 @@ function fnWriteFileEntry(writableEntry, sData, fnCallback, fnErrorCallBack)
 function fnLoadFileEntry(oChosenEntry_in) 
 {
     return new Promise((fnSuccess, fnFail) => {
-        oChosenEntry = oChosenEntry_in;
+        var oChosenEntry = oChosenEntry_in;
         oChosenEntry.file(function(oFile) {
             fnReadAsText(
                 oChosenEntry, 
@@ -94,7 +122,7 @@ function fnLoadFileEntry(oChosenEntry_in)
     });
 }
 
-function fnShowFileDialog(sType='openFile')
+function fnShowFileDialog(sType='openFile', sData='')
 {
     return new Promise((fnSuccess, fnFail) => {
         if (!bIsChromeExtension) {
@@ -119,7 +147,7 @@ function fnShowFileDialog(sType='openFile')
                 }
 
                 if (sType=='saveFile') {
-                    fnSuccess(await fnWriteFileEntry(oEntry));
+                    fnSuccess(await fnWriteFileEntry(oEntry, sData));
                 }
             }
         );
@@ -183,7 +211,7 @@ var local_storage = {
         */
 
         // await fs.writeFile(sDataFilePath, sData, { mode: 0o777 });
-        await fnShowFileDialog('saveFile'); 
+        await fnShowFileDialog('saveFile', sData); 
     },
 
     async setItem(sKey, mValue) 

@@ -111,7 +111,7 @@
                       <q-btn 
                         color="primary" 
                         icon="close" 
-                        @click="fnRemoveResultTab(oTextBox, sResultID)" 
+                        @click="fnRemoveResultTab(oTextBox)" 
                         flat 
                         unelevated 
                         class="col-auto q-ml-sm"
@@ -200,7 +200,7 @@
                           style="border: 1px solid #eee"
                           class="col"
                         >
-                          {{ oResultItem.sResultText }}
+                          <code><pre>{{ oResultItem.sResultText }}</pre></code>
                         </q-scroll-area>
                       </div>
                     </q-tab-panel>
@@ -228,7 +228,7 @@
                   <q-btn flat dense icon="cloud_download" class="col-1" @click="fnDownloadConfig" />
                 </div>
                 <div class="col-auto text-h6 q-mb-sm">Filters</div>
-                <div class="col-5 column">
+                <div class="col-4 column">
                   <div class="row col-auto q-pb-sm">
                     <q-select
                       class="col"
@@ -1070,10 +1070,11 @@ export default {
 
       this.sSelectedTextBox = '';
     },
-    fnRemoveResultTab(oTextBox, sResultID)
+    fnRemoveResultTab(oTextBox)
     {
       console.log(stackTrace.get()[0].getFunctionName(), arguments);
-      Vue.delete(oTextBox.oResults, sResultID);
+      
+      Vue.delete(oTextBox.oResults, oTextBox.sSelectedResultTab);
 
       oTextBox.sSelectedResultTab = utils.fnGetFirstKey(oTextBox.oResults);
     },
