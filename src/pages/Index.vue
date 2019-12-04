@@ -38,7 +38,7 @@
           <q-tab-panel 
             v-for="(oTextBox, sTextBoxID) in oTextBoxes"
             :name="sTextBoxID"
-            class="row"
+            class="row q-pa-sm"
           >
 
               <div class="col-8 column">
@@ -207,21 +207,26 @@
                   </q-tab-panels>
                 </div>             
               </div>
-              <div class="col-4 column q-pl-md">
-                <q-linear-progress 
-                  class="col-auto"
-                  size="25px" 
-                  :value="iStorageFullnessSize/iStorageSize" 
-                  color="accent"
-                >
-                  <div class="absolute-full flex flex-center">
-                    <q-badge 
-                      color="white" 
-                      text-color="accent" 
-                      :label="fnFormatSize(iStorageFullnessSize)+'/'+fnFormatSize(iStorageSize)" 
-                    />
-                  </div>
-                </q-linear-progress>
+              <div class="col-4 column q-pl-sm">
+                <div class="col-auto text-h6 q-mb-sm">Storage</div>
+                <div class="row col-auto q-mb-sm">
+                  <q-linear-progress 
+                    class="col"
+                    size="32px" 
+                    :value="iStorageFullnessSize/iStorageSize" 
+                    color="accent"
+                  >
+                    <div class="absolute-full flex flex-center">
+                      <q-badge 
+                        color="white" 
+                        text-color="accent" 
+                        :label="fnFormatSize(iStorageFullnessSize)+'/'+fnFormatSize(iStorageSize)" 
+                      />
+                    </div>
+                  </q-linear-progress>
+                  <q-btn flat dense icon="cloud_upload" class="col-1" @click="fnUploadConfig" />
+                  <q-btn flat dense icon="cloud_download" class="col-1" @click="fnDownloadConfig" />
+                </div>
                 <div class="col-auto text-h6 q-mb-sm">Filters</div>
                 <div class="col-5 column">
                   <div class="row col-auto q-pb-sm">
@@ -494,7 +499,6 @@ const stackTrace = require('stack-trace');
 
 const moment = require('moment');
 
-const file_backup = require('~/lib/file_backup.js').default;
 const fs = require('~/lib/fs.js').default;
 const utils = require('~/lib/utils.js').default;
 
@@ -503,9 +507,6 @@ const storage = require('~/lib/local_storage.js').default;
 const FILTER_REGEXP = "regexp";
 const FILTER_TEXT = "text";
 const FILTER_FUNCTION = "function";
-
-const sDataDirPath = './config';
-const sDataFilePath = `${sDataDirPath}/config.json`;
 
 import { Notify } from 'quasar';
 
@@ -733,8 +734,9 @@ export default {
     async fnCalcStorageFullnessSize()
     {
       console.log(stackTrace.get()[0].getFunctionName(), arguments);
+      var sConfig = await storage.getItem('config');
 
-      this.iStorageFullnessSize = await storage.getItem('config').length*1;
+      this.iStorageFullnessSize = sConfig.length*1;
     },
     fnCalcstorageSize()
     {
@@ -1197,6 +1199,24 @@ export default {
       console.log(stackTrace.get()[0].getFunctionName(), arguments);
       this.$q.notify({ message: sMessage, icon: 'thumb_up' });
     },
+    async fnUploadConfig()
+    {
+      try {
+        await storage.fnLoadData(this);
+      } catch (oError) {
+        this.fnNotifyError(oError && oError.toString());
+        return;
+      }
+    },
+    async fnDownloadConfig()
+    {
+      try {
+        await storage.fnSaveData(this);
+      } catch (oError) {
+        this.fnNotifyError(oError && oError.toString());
+        return;
+      }
+    },
     async fnSaveData(bShowNotification=false)
     {
       console.log(stackTrace.get()[0].getFunctionName(), arguments);
@@ -1268,6 +1288,7 @@ export default {
 
   async created()
   {
+    console.log('created', stackTrace.get());
     console.log(stackTrace.get()[0].getFunctionName(), arguments);
 
     await this.fnLoadData();
