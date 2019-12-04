@@ -200,7 +200,7 @@
                           style="border: 1px solid #eee"
                           class="col"
                         >
-                          <code><pre style="user-select:all">{{ oResultItem.sResultText }}</pre></code>
+                          <code><pre style="user-select:text">{{ oResultItem.sResultText }}</pre></code>
                         </q-scroll-area>
                       </div>
                     </q-tab-panel>
