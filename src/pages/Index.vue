@@ -296,7 +296,7 @@
               <div class="col column q-pl-sm">
                 <div class="col-auto text-h6 q-mb-sm">Storage</div>
                 <div class="row col-auto q-mb-sm">
-                  <q-linear-progress 
+                  <!--q-linear-progress 
                     class="col"
                     size="32px" 
                     :value="iStorageFullnessSize/iStorageSize" 
@@ -309,7 +309,16 @@
                         :label="fnFormatSize(iStorageFullnessSize)+'/'+fnFormatSize(iStorageSize)" 
                       />
                     </div>
-                  </q-linear-progress>
+                  </q-linear-progress-->
+                  <q-input 
+                    outlined 
+                    square 
+                    v-model="sConfigFilePath" 
+                    dense
+                    readonly
+                    label="Configuration file" 
+                    class="col"
+                  />
                   <q-btn flat dense icon="cloud_upload" class="col-1" @click="fnUploadConfig" />
                   <q-btn flat dense icon="cloud_download" class="col-1" @click="fnDownloadConfig" />
                 </div>
@@ -741,7 +750,7 @@ export default {
       },
 
       oMeFilterOptions: {
-
+        automaticLayout: true
       },
       oMeOptions: {
         automaticLayout: true
@@ -766,7 +775,7 @@ export default {
       sTextBoxesFilterText: '',
       sFiltersFilterText: '',
 
-      sConfigFilePath: "",
+      sConfigFilePath: "123",
 
       iSaveTimerID: -1,
       iSaveTimeout: 15000,
@@ -1236,6 +1245,11 @@ export default {
           );
         }
       });
+    },
+    fnTextBoxFilter(oTextBox)
+    {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
+      return ~oTextBox.sName.indexOf(this.fnTextBoxFilter);
     },
     fnRemoveResultTab(oTextBox)
     {
