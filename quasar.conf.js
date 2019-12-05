@@ -70,14 +70,26 @@ module.exports = function (ctx) {
         cfg.resolve.alias = {
           ...cfg.resolve.alias,
           '~': path.resolve(__dirname, './src')
-        }
+        };
         cfg.module.rules.push({
           enforce: 'pre',
           test: /\.txt$/i,
           loader: 'raw-loader'
-        })
-        const CopyWebpackPlugin = require('copy-webpack-plugin')
+        });
         if (cfg.output) {
+          const MonacoEditorPlugin = require('monaco-editor-webpack-plugin');
+          const CopyWebpackPlugin = require('copy-webpack-plugin');
+
+          cfg.plugins.push(
+            new MonacoEditorPlugin({
+              // https://github.com/Microsoft/monaco-editor-webpack-plugin#options
+              // Include a subset of languages support
+              // Some language extensions like typescript are so huge that may impact build performance
+              // e.g. Build full languages support with webpack 4.0 takes over 80 seconds
+              // Languages are loaded on demand at runtime
+              languages: ['javascript', 'css', 'html', 'typescript']
+            })
+          );
           cfg.plugins.push(
             new CopyWebpackPlugin([
               {
@@ -89,7 +101,7 @@ module.exports = function (ctx) {
                 to: cfg.output.path + '/js'
               }
             ])
-          )
+          );
         }
       }
     },

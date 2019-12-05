@@ -32,7 +32,8 @@
     "quasar": "^1.0.0",
     "stack-trace": "0.0.10",
     "vue-codemirror": "^4.0.6",
-    "vue-global-events": "^1.1.2"
+    "vue-global-events": "^1.1.2",
+    "vue-monaco": "^1.1.0"
   },
   "devDependencies": {
     "@quasar/app": "^1.0.0",
