@@ -15,81 +15,85 @@
     >
 
       <template v-slot:before>
-          <div class="row col-auto q-pa-sm">
-            <q-input 
-              outlined 
-              square 
-              v-model="sTextBoxesFilterText" 
-              dense
-              label="Filter..." 
-              class="col"
-            >
-              <template v-if="sTextBoxesFilterText" v-slot:append>
-                <q-icon name="cancel" @click.stop="sTextBoxesFilterText = ''" class="cursor-pointer" />
-              </template>
-            </q-input>
-            <q-btn-dropdown 
-              color="primary" 
-              class="col-2 dropdown-without-arrow" 
-              dense 
-              unelevated 
-              flat
-              dropdown-icon="none"
-            >
-              <template v-slot:label>
-                <div class="row items-center no-wrap">
-                  <q-icon left name="more_horiz" />
-                </div>
-              </template>
+        <div class="row col-auto q-pa-sm">
+          <q-input 
+            outlined 
+            square 
+            v-model="sTextBoxesFilterText" 
+            dense
+            label="Filter..." 
+            class="col"
+          >
+            <template v-if="sTextBoxesFilterText" v-slot:append>
+              <q-icon name="cancel" @click.stop="sTextBoxesFilterText = ''" class="cursor-pointer" />
+            </template>
+          </q-input>
+          <q-btn-dropdown 
+            color="primary" 
+            class="col-2 dropdown-without-arrow" 
+            dense 
+            unelevated 
+            flat
+            dropdown-icon="none"
+          >
+            <template v-slot:label>
+              <div class="row items-center no-wrap">
+                <q-icon left name="more_horiz" />
+              </div>
+            </template>
 
-              <q-list dense>
-                <q-item clickable v-close-popup @click="fnAddTextBox">
-                  <q-item-section>
-                    <q-item-label>Add</q-item-label>
-                  </q-item-section>
-                </q-item>
+            <q-list dense>
+              <q-item clickable v-close-popup @click="fnAddTextBox">
+                <q-item-section>
+                  <q-item-label>Add</q-item-label>
+                </q-item-section>
+              </q-item>
 
-                <q-item clickable v-close-popup @click="fnRemoveTextBoxes">
-                  <q-item-section>
-                    <q-item-label>Remove</q-item-label>
-                  </q-item-section>
-                </q-item>
+              <q-item clickable v-close-popup @click="fnRemoveTextBoxes">
+                <q-item-section>
+                  <q-item-label>Remove</q-item-label>
+                </q-item-section>
+              </q-item>
 
-                <q-item clickable v-close-popup @click="fnCloneTextBox">
-                  <q-item-section>
-                    <q-item-label>Clone</q-item-label>
-                  </q-item-section>
-                </q-item>
-              </q-list>
-            </q-btn-dropdown>
-          </div>
+              <q-item clickable v-close-popup @click="fnCloneTextBox">
+                <q-item-section>
+                  <q-item-label>Clone</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-btn-dropdown>
+        </div>
+        <div class="col textboxes-list-scollarea">
           <q-scroll-area
             :thumb-style="oScollbarThumbStyle"
             :bar-style="oScollbarBarStyle"
             style="border: 1px solid #eee; height:calc(100% - 58px)"
             class=""
           >
-            <q-list separator>
-              <q-item
-                v-if="fnTextBoxFilter(oTextBox)" 
-                v-for="(oTextBox, sTextBoxID) in oTextBoxes"
-                clickable 
-                v-ripple
-                dense
-                :active="sSelectedTextBox==sTextBoxID"
-                @click="sSelectedTextBox = sTextBoxID"
-              >
-                <q-item-section side top>
-                  <q-checkbox 
-                    v-model="oTextBox.bSelected" 
-                  />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{ oTextBox.sName ? oTextBox.sName : 'Undefined' }}</q-item-label>
-                </q-item-section>
-              </q-item>
-            </q-list>
+            <div class="textboxes-list">
+              <q-list separator>
+                <q-item
+                  v-if="fnTextBoxFilter(oTextBox)" 
+                  v-for="(oTextBox, sTextBoxID) in oTextBoxes"
+                  clickable 
+                  v-ripple
+                  dense
+                  :active="sSelectedTextBox==sTextBoxID"
+                  @click="sSelectedTextBox = sTextBoxID"
+                >
+                  <q-item-section side top>
+                    <q-checkbox 
+                      v-model="oTextBox.bSelected" 
+                    />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{ oTextBox.sName ? oTextBox.sName : 'Undefined' }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </div>
           </q-scroll-area>
+        </div>
       </template>
 
       <template v-slot:after>
@@ -112,130 +116,118 @@
                 :name="sTextBoxID"
                 class="q-pa-none column"
               >
-
-                  <div class="col column">
-                    <div class="col-auto q-pa-sm row">
-                      <q-input
-                        ref="textbox_name"
-                        outlined 
-                        dense
-                        square
-                        v-model="oTextBox.sName" 
-                        label="Name" 
-                        class="col"
-                      />
-                      <q-btn-toggle
-                        flat
-                        square 
-                        unelevated 
-                        class="col-auto"
-                        v-model="bPasteAsText"
-                        toggle-color="primary"
-                        :options="[
-                          {label: 'text', value: true},
-                          {label: 'html', value: false}
-                        ]"
-                      />
-                      <q-btn 
-                        flat
-                        color="negative" 
-                        icon="delete" 
-                        @click="fnRemoveTextBox" 
-                        square 
-                        unelevated 
-                        class="col-auto"
-                      />
-                    </div>
-                    <MonacoEditor 
-                      ref="me_editor"
-                      class="" 
-                      style="width:100%;height:calc(50vh - 58px);border:1px solid grey"
-                      v-model="oTextBox.sTextArea" 
-                      :options="oMeOptions"
-                      language="javascript" 
-                      @editorDidMount="fnMonacoEditorDidMount"
+                <div class="col column">
+                  <div class="col-auto q-pa-sm row">
+                    <q-input
+                      ref="textbox_name"
+                      outlined 
+                      dense
+                      square
+                      v-model="oTextBox.sName" 
+                      label="Name" 
+                      class="col"
                     />
-                    <!--codemirror
-                      ref="cm_editor"
-                      :value="oTextBox.sTextArea" 
-                      :options="oCmOptions"
-                      @ready="fnOnCmReady"
-                      @focus="fnOnCmFocus"
-                      @input="(sNewText) => { fnOnCmCodeChange(sNewText, oTextBox) }"
-                      class="flex col"
-                      style="width:100%"
+                    <q-btn-toggle
+                      flat
+                      square 
+                      unelevated 
+                      class="col-auto"
+                      v-model="bPasteAsText"
+                      toggle-color="primary"
+                      :options="[
+                        {label: 'text', value: true},
+                        {label: 'html', value: false}
+                      ]"
+                    />
+                    <q-btn 
+                      flat
+                      color="negative" 
+                      icon="delete" 
+                      @click="fnRemoveTextBox" 
+                      square 
+                      unelevated 
+                      class="col-auto"
+                    />
+                  </div>
+                  <MonacoEditor 
+                    ref="me_editor"
+                    class="" 
+                    style="width:100%;height:calc(50vh - 58px);border:1px solid grey"
+                    v-model="oTextBox.sTextArea" 
+                    :options="oMeOptions"
+                    language="javascript" 
+                    @editorDidMount="fnMonacoEditorDidMount"
+                  />
+                  <div class="col-6">
+                    <q-tabs
+                      v-model="oTextBox.sSelectedResultTab"
+                      dense
+                      align="left"
+                      active-color="primary"
+                      indicator-color="primary"
+                      narrow-indicator
                     >
-                    </codemirror-->
-                    <div class="col-6">
-                      <q-tabs
-                        v-model="oTextBox.sSelectedResultTab"
-                        dense
-                        align="left"
-                        active-color="primary"
-                        indicator-color="primary"
-                        narrow-indicator
-                      >
-                        <q-tab 
-                          :name="sResultID" 
-                          :label="oResultItem.sName ? oResultItem.sName : 'Undefined'" 
-                          v-for="(oResultItem, sResultID) in oTextBox.oResults"
+                      <q-tab 
+                        :name="sResultID" 
+                        :label="oResultItem.sName ? oResultItem.sName : 'Undefined'" 
+                        v-for="(oResultItem, sResultID) in oTextBox.oResults"
+                      />
+                        <q-btn 
+                          color="primary" 
+                          icon="loop"
+                          @click="fnReuseResultTab" 
+                          flat 
+                          unelevated 
+                          class="col-auto q-ml-auto"
+                          v-if="oTextBox.sSelectedResultTab"
                         />
-                          <q-btn 
-                            color="primary" 
-                            icon="loop"
-                            @click="fnReuseResultTab" 
-                            flat 
-                            unelevated 
-                            class="col-auto q-ml-auto"
-                            v-if="oTextBox.sSelectedResultTab"
-                          />
-                          <q-btn 
-                            color="primary" 
-                            icon="close" 
-                            @click="fnRemoveResultTab(oTextBox)" 
-                            flat 
-                            unelevated 
-                            class="col-auto q-ml-sm"
-                            v-if="oTextBox.sSelectedResultTab"
-                          />
-                        </q-tab>
-                      </q-tabs>
+                        <q-btn 
+                          color="primary" 
+                          icon="close" 
+                          @click="fnRemoveResultTab(oTextBox)" 
+                          flat 
+                          unelevated 
+                          class="col-auto q-ml-sm"
+                          v-if="oTextBox.sSelectedResultTab"
+                        />
+                      </q-tab>
+                    </q-tabs>
 
-                      <q-separator />
+                    <q-separator />
 
-                      <q-tab-panels 
-                        v-model="oTextBox.sSelectedResultTab" 
-                        class="flex"
-                        style="height: calc(100% - 32px)"
+                    <q-tab-panels 
+                      v-model="oTextBox.sSelectedResultTab" 
+                      class="flex"
+                      style="height: calc(100% - 32px)"
+                    >
+                      <q-tab-panel 
+                        :name="sResultID" 
+                        v-for="(oResultItem, sResultID) in oTextBox.oResults"
+                        class="row flex"
                       >
-                        <q-tab-panel 
-                          :name="sResultID" 
-                          v-for="(oResultItem, sResultID) in oTextBox.oResults"
-                          class="row flex"
-                        >
-                          <div class="col-3 column">
-                            <q-input 
-                              outlined 
-                              square 
-                              v-model="oResultItem.sName" 
-                              dense
-                              label="Name" 
-                              class="col-auto q-pb-sm"
-                            />
-                            <q-input 
-                              outlined 
-                              square 
-                              v-model="oResultItem.sFiltersFilter" 
-                              dense
-                              label="Filter" 
-                              class="col-auto q-pb-sm"
-                            />
-                            <q-scroll-area
-                              :thumb-style="oScollbarThumbStyle"
-                              :bar-style="oScollbarBarStyle"
-                              style="border: 1px solid #eee"
-                              class="col-5 q-pb-sm"
-                            >
+                        <div class="col-3 column" style="min-height: max-content;">
+                          <q-input 
+                            outlined 
+                            square 
+                            v-model="oResultItem.sName" 
+                            dense
+                            label="Name" 
+                            class="col-auto q-pb-sm"
+                          />
+                          <q-input 
+                            outlined 
+                            square 
+                            v-model="oResultItem.sFiltersFilter" 
+                            dense
+                            label="Filter" 
+                            class="col-auto q-pb-sm"
+                          />
+                          <q-scroll-area
+                            :thumb-style="oScollbarThumbStyle"
+                            :bar-style="oScollbarBarStyle"
+                            style="border: 1px solid #eee; min-height: 200px"
+                          >
+                            <div class="filters-list">
                               <q-list bordered separator>
                                 <q-item
                                   v-for="(oFilter, sFilterID) in oResultItem.oFilters"
@@ -258,43 +250,43 @@
                                     <q-item-label caption>{{ oFilter.sType }}</q-item-label>
                                   </q-item-section>
                                 </q-item>
-                              </q-list>                        
-                            </q-scroll-area>
-                            <div class="col-4 q-pa-sm" v-if="oSelectedResultItemFilter">
-                              <b>Name:</b> {{ oSelectedResultItemFilter.sName }}<br>
-                              <b>Type:</b> {{ oSelectedResultItemFilter.sType }}<br>
-                              <div v-if="oSelectedResultItemFilter.sType=='regexp'">
-                                <b>RegExp:</b> /{{ oSelectedResultItemFilter.sRegExp }}/{{ oSelectedResultItemFilter.sFlags }}<br>
-                              </div>
-                              <div v-if="oSelectedResultItemFilter.sType=='text'">
-                                <b>Substring:</b> {{ oSelectedResultItemFilter.sSubString }}<br>
-                              </div>
-                              <div v-if="oSelectedResultItemFilter.sType=='function'">
-                                <b>Function:</b> {{ oSelectedResultItemFilter.sFunction }}<br>
-                              </div>
+                              </q-list> 
+                            </div>                       
+                          </q-scroll-area>
+                          <div class="col-4 q-pa-sm" v-if="oSelectedResultItemFilter">
+                            <b>Name:</b> {{ oSelectedResultItemFilter.sName }}<br>
+                            <b>Type:</b> {{ oSelectedResultItemFilter.sType }}<br>
+                            <div v-if="oSelectedResultItemFilter.sType=='regexp'">
+                              <b>RegExp:</b> /{{ oSelectedResultItemFilter.sRegExp }}/{{ oSelectedResultItemFilter.sFlags }}<br>
+                            </div>
+                            <div v-if="oSelectedResultItemFilter.sType=='text'">
+                              <b>Substring:</b> {{ oSelectedResultItemFilter.sSubString }}<br>
+                            </div>
+                            <div v-if="oSelectedResultItemFilter.sType=='function'">
+                              <b>Function:</b> {{ oSelectedResultItemFilter.sFunction }}<br>
                             </div>
                           </div>
-                          <div class="col flex q-pl-sm">
-                            <q-scroll-area
-                              :thumb-style="oScollbarThumbStyle"
-                              :bar-style="oScollbarBarStyle"
-                              style="border: 1px solid #eee"
-                              class="col"
-                            >
-                              <code><pre style="user-select:text">{{ oResultItem.sResultText }}</pre></code>
-                            </q-scroll-area>
-                          </div>
-                        </q-tab-panel>
-                      </q-tab-panels>
-                    </div>             
-                  </div>
+                        </div>
+                        <div class="col flex q-pl-sm" style="min-height: max-content;">
+                          <q-scroll-area
+                            :thumb-style="oScollbarThumbStyle"
+                            :bar-style="oScollbarBarStyle"
+                            style="border: 1px solid #eee"
+                            class="col"
+                          >
+                            <code><pre style="user-select:text">{{ oResultItem.sResultText }}</pre></code>
+                          </q-scroll-area>
+                        </div>
+                      </q-tab-panel>
+                    </q-tab-panels>
+                  </div>             
+                </div>
               </q-tab-panel>
             </q-tab-panels>
 
           </template>
           <template v-slot:after>
-              <div class="col column q-pl-sm">
-                <div class="col-auto text-h6 q-mb-sm">Storage</div>
+              <div class="col column q-pa-sm" style="min-height: max-content;">
                 <div class="row col-auto q-mb-sm">
                   <!--q-linear-progress 
                     class="col"
@@ -319,11 +311,11 @@
                     label="Configuration file" 
                     class="col"
                   />
-                  <q-btn flat dense icon="cloud_upload" class="col-1" @click="fnUploadConfig" />
-                  <q-btn flat dense icon="cloud_download" class="col-1" @click="fnDownloadConfig" />
+                  <q-btn flat dense icon="cloud_upload" class="col-2" @click="fnUploadConfig" />
+                  <q-btn flat dense icon="cloud_download" class="col-2" @click="fnDownloadConfig" />
                 </div>
                 <div class="col-auto text-h6 q-mb-sm">Filters</div>
-                <div class="col-4 column">
+                <template>
                   <div class="row col-auto q-pb-sm">
                     <q-select
                       class="col"
@@ -427,41 +419,43 @@
                   <q-scroll-area
                     :thumb-style="oScollbarThumbStyle"
                     :bar-style="oScollbarBarStyle"
-                    style="border: 1px solid #eee"
-                    class="col"
+                    style="border: 1px solid #eee;"
+                    class="col-3 filters-list-scollarea q-pb-sm"
                   >
-                    <q-list separator>
-                      <q-item
-                        v-if="fnFilterFilter(oFilter)" 
-                        v-for="(oFilter, sFilterID) in oFilters"
-                        clickable 
-                        v-ripple
-                        dense
-                        :active="sSelectedFilter==sFilterID"
-                        @click="sSelectedFilter = sFilterID"
-                      >
-                        <q-item-section side top>
-                          <q-checkbox 
-                            v-model="oFilter.bSelected" 
-                            @input="fnUpdateCurrentGroup" 
-                          />
-                        </q-item-section>
-                        <q-item-section>
-                          <q-item-label>{{ oFilter.sName ? oFilter.sName : 'Undefined' }}</q-item-label>
-                          <q-item-label caption lines="2">
-                            <small v-if="oFilter.sType=='regexp'">/{{ oFilter.sRegExp }}/{{ oFilter.sFlags }}</small>
-                            <small v-if="oFilter.sType=='text'">{{ oFilter.sSubString }}</small>
-                          </q-item-label>
-                        </q-item-section>
+                    <div class="filters-list">
+                      <q-list separator>
+                        <q-item
+                          v-if="fnFilterFilter(oFilter)" 
+                          v-for="(oFilter, sFilterID) in oFilters"
+                          clickable 
+                          v-ripple
+                          dense
+                          :active="sSelectedFilter==sFilterID"
+                          @click="sSelectedFilter = sFilterID"
+                        >
+                          <q-item-section side top>
+                            <q-checkbox 
+                              v-model="oFilter.bSelected" 
+                              @input="fnUpdateCurrentGroup" 
+                            />
+                          </q-item-section>
+                          <q-item-section>
+                            <q-item-label>{{ oFilter.sName ? oFilter.sName : 'Undefined' }}</q-item-label>
+                            <q-item-label caption lines="2">
+                              <small v-if="oFilter.sType=='regexp'">/{{ oFilter.sRegExp }}/{{ oFilter.sFlags }}</small>
+                              <small v-if="oFilter.sType=='text'">{{ oFilter.sSubString }}</small>
+                            </q-item-label>
+                          </q-item-section>
 
-                        <q-item-section side>
-                          <q-item-label caption>{{ oFilter.sType }}</q-item-label>
-                        </q-item-section>
-                      </q-item>
-                    </q-list>
+                          <q-item-section side>
+                            <q-item-label caption>{{ oFilter.sType }}</q-item-label>
+                          </q-item-section>
+                        </q-item>
+                      </q-list>
+                    </div>
                   </q-scroll-area>
-                </div>
-                <div class="col-6 column q-pt-md" v-if="oFilters[sSelectedFilter]">
+                </template>
+                <template v-if="oFilters[sSelectedFilter]">
                   <q-input
                     ref="filter_name"
                     outlined 
@@ -483,7 +477,7 @@
                     @input="(v) => fnChangeFilterType(v, sSelectedFilter)" 
                   />
 
-                  <div class="col-auto column" v-show="oFilters[sSelectedFilter].sType=='regexp'">
+                  <template v-if="oFilters[sSelectedFilter].sType=='regexp'">
                     <q-input 
                       square
                       dense
@@ -513,8 +507,8 @@
                       type="textarea"
                       label="Replacement"
                     />
-                  </div>
-                  <div class="col-auto column" v-show="oFilters[sSelectedFilter].sType=='text'">
+                  </template>
+                  <template v-if="oFilters[sSelectedFilter].sType=='text'">
                     <q-input outlined v-model="oFilters[sSelectedFilter].sSubString" label="String" class="col-auto q-mb-sm"/>
                     <q-input
                       v-model="oFilters[sSelectedFilter].sReplacement"
@@ -524,8 +518,8 @@
                       type="textarea"
                       label="Replacement"
                     />
-                  </div>
-                  <div class="col column" v-show="oFilters[sSelectedFilter].sType=='function'">
+                  </template>
+                  <template v-if="oFilters[sSelectedFilter].sType=='function'">
                     <MonacoEditor 
                       ref="filter_me_editor"
                       class="flex col" 
@@ -533,17 +527,8 @@
                       v-model="oFilters[sSelectedFilter].sFunction" 
                       language="javascript" 
                     />
-                    <!--codemirror
-                      ref="filter_cm_editor"
-                      :value="oFilters[sSelectedFilter].sFunction" 
-                      :options="oFilterCmOptions"
-                      @input="(sNewText) => { fnOnFilterCmCodeChange(sNewText, sSelectedFilter) }"
-                      class="flex col"
-                      style="width:100%; height:100%"
-                    >
-                    </codemirror-->
-                  </div>
-                </div>
+                  </template>
+                </template>
               </div>
 
           </template>
@@ -568,6 +553,21 @@
   border: 1px solid #eee;
 }
 */
+.filters-list-scollarea {
+  min-height: 200px !important;
+}
+.textboxes-list .q-item--dense {
+  padding: 0px 5px 0px 0px;
+}
+.textboxes-list .q-item__section--side {
+  padding-right: 0px;
+} 
+.filters-list .q-item--dense {
+  padding: 0px 5px 0px 0px;
+}
+.filters-list .q-item__section--side {
+  padding-right: 0px;
+}
 .dropdown-without-arrow .on-left {
   margin-right: 0px;
 }
@@ -1103,6 +1103,7 @@ export default {
     },
     fnSetSelectedFilterForResultItem(oResultItem, sFilterID)
     {
+      console.log(stackTrace.get()[0].getFunctionName(), arguments);
       Vue.set(oResultItem, 'sSelectedFilter', sFilterID);
     },
     fnExecuteFilters()
@@ -1193,6 +1194,7 @@ export default {
         sCUID, 
         {
           sName: '',
+          bSelected: false,
           sSelectedResultTab: "",
           sTextArea: "",
           oResults: {
@@ -1249,7 +1251,8 @@ export default {
     fnTextBoxFilter(oTextBox)
     {
       console.log(stackTrace.get()[0].getFunctionName(), arguments);
-      return ~oTextBox.sName.indexOf(this.fnTextBoxFilter);
+
+      return !this.sTextBoxesFilterText || ~oTextBox.sName.indexOf(this.sTextBoxesFilterText);
     },
     fnRemoveResultTab(oTextBox)
     {
