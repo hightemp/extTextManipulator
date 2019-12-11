@@ -1133,12 +1133,11 @@ export default {
         }
         if (oFilter.sType==FILTER_FUNCTION) {
           try {
-            eval('sResult = ('+oFilter.sFunction+')('+JSON.stringify(sResult)+')');
-            //sResult = fnFunction(sResult);
+            eval('var fnFunction = '+oFilter.sFunction);
           } catch (oError) {
-            oThis.fnNotifyError(oError.toString());
-            console.error(oError);
-          }          
+            oThis.fnNotifyError(oError);
+          }
+          sResult = fnFunction(sResult);
         }
 
         oSelectedFilters[sKey] = deepcopy(oFilter);

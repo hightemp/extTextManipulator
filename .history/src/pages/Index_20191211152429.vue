@@ -1133,10 +1133,10 @@ export default {
         }
         if (oFilter.sType==FILTER_FUNCTION) {
           try {
-            eval('sResult = ('+oFilter.sFunction+')('+JSON.stringify(sResult)+')');
-            //sResult = fnFunction(sResult);
+            eval('var fnFunction = '+oFilter.sFunction);
+            sResult = fnFunction(sResult);
           } catch (oError) {
-            oThis.fnNotifyError(oError.toString());
+            oThis.fnNotifyError(oError);
             console.error(oError);
           }          
         }
